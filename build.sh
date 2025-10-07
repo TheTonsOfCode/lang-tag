@@ -13,7 +13,6 @@ echo "Building project..."
 rm -rf dist/
 tsc
 vite build
-chmod 777 dist/cli/index.js
 
 # Check if dist exists
 if [ ! -d "dist" ]; then
