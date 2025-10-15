@@ -6,7 +6,7 @@ export interface LangTagTranslationsConfig<Namespaces = string> {
     /** Optional base path for translation keys. */
     path?: string;
     /** The namespace for the translations. */
-    namespace: Namespaces;
+    namespace?: Namespaces;
 }
 
 /**
