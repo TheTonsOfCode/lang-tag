@@ -18,7 +18,16 @@ export type LangTagTranslations = {
     [key: string]: string | LangTagTranslations;
 };
 
-// export type LangTag<Config extends LangTagConfig = LangTagConfig, T = any> = (translations: LangTagTranslations, config?: Config) => T;
+/**
+ * Represents a collection of optional translations.
+ * Keys are strings, and values can be either strings (translations)
+ * or nested LangTagTranslations objects for hierarchical translations.
+ */
+export type LangTagOptionalTranslations = {
+    [key in string]?: string | LangTagOptionalTranslations;
+};
+
+// export type LangTag<Config extends LangTagConfig = LangTagConfig, T = any> = (translations: LangTagOptionalTranslations, config?: Config) => T;
 
 /**
  * Defines the structure for parameters used in interpolation.
@@ -39,11 +48,11 @@ export type ParameterizedTranslation = (params?: InterpolationParams) => string;
  */
 export type CallableTranslations<T> = {
     [P in keyof T]:
-        T[P] extends ParameterizedTranslation ? ParameterizedTranslation :
+        NonNullable<T[P]> extends ParameterizedTranslation ? ParameterizedTranslation :
         // Allow for pre-existing functions that might not strictly be ParameterizedTranslation
         // but are still callable and return a string, or a nested structure.
-        T[P] extends (...args: any[]) => string ? T[P] :
-        T[P] extends Record<string, any> ? CallableTranslations<T[P]> :
+        NonNullable<T[P]> extends (...args: any[]) => string ? NonNullable<T[P]> :
+        NonNullable<T[P]> extends Record<string, any> ? CallableTranslations<NonNullable<T[P]>> :
         ParameterizedTranslation; // Fallback for basic strings that will be converted
 };
 
@@ -126,7 +135,7 @@ export interface TranslationMappingStrategy<Config extends LangTagTranslationsCo
  * @internal
  */
 function transformTranslationsToFunctions<
-    T extends LangTagTranslations,
+    T extends LangTagOptionalTranslations,
     Config extends LangTagTranslationsConfig
 >(
     config: Config | undefined,
@@ -197,7 +206,7 @@ function transformTranslationsToFunctions<
  * @returns A callable translations object.
  */
 export function createCallableTranslations<
-    T extends LangTagTranslations,
+    T extends LangTagOptionalTranslations,
     Config extends LangTagTranslationsConfig
 >(
     translations: T,
