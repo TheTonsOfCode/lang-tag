@@ -106,7 +106,7 @@ function buildIncludesPattern(directories: string[]): string {
 
 function buildExcludesPattern(): string {
     const excludes = [
-        'node_modules',
+        '**/node_modules/**',
         'dist',
         'build',
         '**/*.test.ts',
