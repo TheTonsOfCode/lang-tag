@@ -1,3 +1,8 @@
+import type {
+    ResolvedPlaceholderTranslation,
+    PlaceholderParamsOptions,
+} from './placeholder-params';
+
 /**
  * Configuration for LangTag translations.
  * @template Namespaces - The type used for namespaces, defaults to string.
@@ -34,28 +39,47 @@ export type LangTagOptionalTranslations = {
  * It's a record where keys are placeholders and values are their replacements.
  */
 export type InterpolationParams = Record<string, any>;
+
 /**
  * Represents a function that takes optional interpolation parameters
  * and returns a translated string.
+ * @template P - The shape of the accepted interpolation parameters.
+ *   Defaults to {@link InterpolationParams}; can be narrowed via the generic
+ *   (typically inferred from a translation string through `PlaceholderValues`).
  */
-export type ParameterizedTranslation = (params?: InterpolationParams) => string;
+export type ParameterizedTranslation<
+    P extends Record<string, any> = InterpolationParams,
+> = (params?: P) => string;
 
 /**
  * Transforms a static translation object into an object where each
  * translation string or nested object is converted into a callable function
  * or a nested structure of callable functions.
+ *
+ * String leaves have their parameters inferred from template placeholders
+ * (`{{name}}` by default), enabling autocomplete. How those parameters behave —
+ * strictness level, accepted value type and placeholder syntax — is configured via
+ * the {@link PlaceholderParamsOptions} `Params` bundle (see `./placeholder-params`),
+ * which defaults to the built-in behaviour and can be overridden per tag without
+ * patching core.
  * @template T - The structure of the input translations.
+ * @template PPO - The {@link PlaceholderParamsOptions} bundle for inferred parameters. Defaults to all defaults.
  */
-export type CallableTranslations<T> = {
+export type CallableTranslations<
+    T,
+    PPO extends PlaceholderParamsOptions = {},
+> = {
     [P in keyof T]: NonNullable<T[P]> extends ParameterizedTranslation
         ? ParameterizedTranslation
         : // Allow for pre-existing functions that might not strictly be ParameterizedTranslation
           // but are still callable and return a string, or a nested structure.
           NonNullable<T[P]> extends (...args: any[]) => string
           ? NonNullable<T[P]>
-          : NonNullable<T[P]> extends Record<string, any>
-            ? CallableTranslations<NonNullable<T[P]>>
-            : ParameterizedTranslation; // Fallback for basic strings that will be converted
+          : NonNullable<T[P]> extends string
+            ? ResolvedPlaceholderTranslation<NonNullable<T[P]>, PPO>
+            : NonNullable<T[P]> extends Record<string, any>
+              ? CallableTranslations<NonNullable<T[P]>, PPO>
+              : ParameterizedTranslation; // Fallback for basic strings that will be converted
 };
 
 /**

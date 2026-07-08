@@ -3,6 +3,7 @@ import {
     type CallableTranslations,
     type LangTagTranslations,
     type LangTagTranslationsConfig,
+    type PlaceholderStrictnessLevel,
     type PartialFlexibleTranslations,
     createCallableTranslations,
     normalizeTranslations,
@@ -27,32 +28,42 @@ interface TagConfig extends LangTagTranslationsConfig {
 }
 
 /**
+ * How placeholder parameters (e.g. `{{name}}`) are inferred. See PlaceholderParamsOptions
+ * for every option (level, value, extractor).
+ *
+ * For a different placeholder syntax (e.g. `${name}`) plug in a ready-made extractor:
+ *   import type { DollarBraceExtractor } from 'lang-tag';
+ *   type PlaceholderParams = { level: PlaceholderStrictnessLevel<'optional-open'>; extractor: DollarBraceExtractor };
+ */
+type PlaceholderParams = { level: PlaceholderStrictnessLevel<'optional-open'> };
+
+/**
 * Ensures the Tag type compiles into a named alias rather than an expanded structural type,
 * preventing bloated .d.ts output during tag generation and keeping exported definitions clean.
 */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace {{tagName}} {
     export type Tag<T extends LangTagTranslations> = {
-        useTranslations: () => CallableTranslations<T>;
-        initTranslations: (translations?: PartialFlexibleTranslations<T>) => CallableTranslations<T>;
+        useTranslations: () => CallableTranslations<T, PlaceholderParams>;
+        initTranslations: (translations?: PartialFlexibleTranslations<T>) => CallableTranslations<T, PlaceholderParams>;
         Provider(props: { translations?: PartialFlexibleTranslations<T>; children: ReactNode }): ReactNode;
         InputType: PartialFlexibleTranslations<T>;
-        Type: CallableTranslations<T>;
+        Type: CallableTranslations<T, PlaceholderParams>;
     };
 }
 
 {{/isTypeScript}}
-export function {{tagName}}{{#isTypeScript}}<T extends LangTagTranslations>{{/isTypeScript}}(
+export function {{tagName}}{{#isTypeScript}}<const T extends LangTagTranslations>{{/isTypeScript}}(
     baseTranslations: T,
     config?: TagConfig,
 ){{#isTypeScript}}: {{tagName}}.Tag<T>{{/isTypeScript}} {
-    const createTranslationHelper = (normalized{{#isTypeScript}}: CallableTranslations<T> | null{{/isTypeScript}}) =>
+    const createTranslationHelper = (normalized{{#isTypeScript}}: CallableTranslations<T> | null{{/isTypeScript}}){{#isTypeScript}}: CallableTranslations<T, PlaceholderParams>{{/isTypeScript}} =>
         createCallableTranslations(baseTranslations, config, {
             transform: ({unprefixedPath, value, params}) => {
                 const fn = normalized && lookupTranslation(normalized, unprefixedPath);
                 return processPlaceholders(fn ? fn(params) : value, params);
             }
-        });
+        }){{#isTypeScript}} as CallableTranslations<T, PlaceholderParams>{{/isTypeScript}};
 
     {{#isReact}}
     const Context = createContext{{#isTypeScript}}<CallableTranslations<T> | null>{{/isTypeScript}}(null);

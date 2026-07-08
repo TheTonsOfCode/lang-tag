@@ -32,7 +32,7 @@
 {{#addComments}}
 // Preserves tags marked with keep property. Example: {{tagName}}({ text: 'text'}, { namespace: 'custom', keep: 'namespace' })
 {{/addComments}}
-    const keeper = configKeeper({ propertyName: 'keep' });
+const keeper = configKeeper({ propertyName: 'keep' });
 
 {{/useKeeper}}
 /** @type {import('@lang-tag/cli/type').LangTagCLIConfig} */

@@ -3,6 +3,7 @@ import {
     type CallableTranslations,
     type LangTagTranslations,
     type LangTagTranslationsConfig,
+    type PlaceholderStrictnessLevel,
     createCallableTranslations
 } from 'lang-tag';
 {{/isTypeScript}}
@@ -17,8 +18,18 @@ import React, { type ReactNode, useMemo } from 'react';
 interface TagConfig extends LangTagTranslationsConfig {
     keep?: 'namespace' | 'path' | 'both'
 }
+
+/**
+ * How placeholder parameters (e.g. `{{name}}`) are inferred. See PlaceholderParamsOptions
+ * for every option (level, value, extractor).
+ *
+ * For a different placeholder syntax (e.g. `${name}`) plug in a ready-made extractor:
+ *   import type { DollarBraceExtractor } from 'lang-tag';
+ *   type PlaceholderParams = { level: PlaceholderStrictnessLevel<'optional-open'>; extractor: DollarBraceExtractor };
+ */
+type PlaceholderParams = { level: PlaceholderStrictnessLevel<'optional-open'> };
 {{/isTypeScript}}
-export function {{tagName}}{{#isTypeScript}}<T extends LangTagTranslations>{{/isTypeScript}}(
+export function {{tagName}}{{#isTypeScript}}<const T extends LangTagTranslations>{{/isTypeScript}}(
     baseTranslations{{#isTypeScript}}: T{{/isTypeScript}},
     config{{#isTypeScript}}?: TagConfig{{/isTypeScript}},
 ) {
@@ -42,12 +53,12 @@ export function {{tagName}}{{#isTypeScript}}<T extends LangTagTranslations>{{/is
     //     });
     // };
 
-    const createTranslations = () => {
+    const createTranslations = (){{#isTypeScript}}: CallableTranslations<T, PlaceholderParams>{{/isTypeScript}} => {
         return createCallableTranslations(baseTranslations, config, {
             transform: ({ value, params }) => {
                 return processPlaceholders(value, params);
             },
-        });
+        }){{#isTypeScript}} as CallableTranslations<T, PlaceholderParams>{{/isTypeScript}};
     };
 
     return {
@@ -63,7 +74,7 @@ export function {{tagName}}{{#isTypeScript}}<T extends LangTagTranslations>{{/is
             return createTranslations();
         },
         {{#isTypeScript}}
-        Type: {} as CallableTranslations<T>,
+        Type: {} as CallableTranslations<T, PlaceholderParams>,
         {{/isTypeScript}}
     };
 }

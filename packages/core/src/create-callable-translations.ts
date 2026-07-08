@@ -125,7 +125,7 @@ function transformTranslationsToFunctions<
  * @returns A callable translations object.
  */
 export function createCallableTranslations<
-    T extends LangTagOptionalTranslations,
+    const T extends LangTagOptionalTranslations,
     Config extends LangTagTranslationsConfig,
 >(
     translations: T,
