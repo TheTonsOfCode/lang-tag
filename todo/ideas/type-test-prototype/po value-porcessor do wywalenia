@@ -1,0 +1,15 @@
+o.processKey(
+          p,
+          (i, y) => {
+            const h = n + i, b = f ? `${f}.${i}` : i;
+            l[i] = a(
+              h,
+              b,
+              i,
+              y
+            );
+          }
+
+
+
+bedzie jeszcze mniejszy bundle a to zostanie zastapione tym value-processor
