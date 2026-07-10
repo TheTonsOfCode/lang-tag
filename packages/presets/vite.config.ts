@@ -45,7 +45,7 @@ export default defineConfig({
             formats: [format],
         },
         rollupOptions: {
-            external: [/^lang-tag(\/.*)?$/, /^node:/],
+            external: [/^lang-tag(\/.*)?$/, /^react(\/.*)?$/, /^node:/],
             output: {
                 preserveModules: true,
                 preserveModulesRoot: 'src',

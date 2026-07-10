@@ -74,6 +74,35 @@ t.$('greeting'); // ok
 t.$('nope'); // compile-time error
 ```
 
+### `react/placeholders`
+
+Replaces `{{ name }}` placeholders with values that may be React nodes. When a
+placeholder resolves to a React element the result is a React fragment tree,
+otherwise a plain string is returned. Wire it into a tag's `transform`:
+
+```ts
+import { processPlaceholders } from '@lang-tag/presets/react/placeholders';
+
+createCallableTranslations(translations, config, {
+    transform: ({ value, params }) => processPlaceholders(value, params),
+});
+```
+
+Prefer a different placeholder syntax? Pass a custom `pattern` (the placeholder
+name must be the first capture group; the global flag is added if missing):
+
+```ts
+// `${ name }` instead of `{{ name }}`
+processPlaceholders(value, params, { pattern: /\$\{(.*?)\}/g });
+```
+
+`react` is an **optional** peer dependency (`>=18`) — install it only if you use
+this module:
+
+```bash
+npm install react
+```
+
 ## License
 
 MIT
