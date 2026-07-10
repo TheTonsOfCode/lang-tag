@@ -9,7 +9,11 @@ fi
 
 echo "Building @lang-tag/presets..."
 rm -rf dist/
-tsc -b
+
+# Two passes so every *.ts file is emitted 1:1 in both module systems:
+# ESM (.js, + .d.ts) and CJS (.cjs), keeping the source directory structure.
+BUILD_FORMAT=es vite build
+BUILD_FORMAT=cjs vite build
 
 if [ ! -d "dist" ]; then
   echo "Error: The dist directory was not created. Check the build process."
@@ -30,8 +34,17 @@ delete pkg.devDependencies;
 delete pkg.files;
 if (pkg.private) delete pkg.private;
 
+// The dist/ directory is the package root when published/packed, so the
+// subpath exports must be relative to it (drop the 'dist/' prefix).
+pkg.exports = {
+    './*': {
+        types: './*.d.ts',
+        import: './*.js',
+        require: './*.cjs',
+    },
+};
+
 fs.writeFileSync('dist/package.json', JSON.stringify(pkg, null, 2));
 "
 
 echo "Build completed!"
-

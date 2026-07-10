@@ -1,22 +1,50 @@
 {
     "name": "@lang-tag/presets",
-    "version": "1.0.1",
+    "version": "0.0.1",
     "type": "module",
-    "main": "dist/index.js",
-    "types": "dist/index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/TheTonsOfCode/lang-tag"
+    },
+    "author": "TheTonsOfCode",
+    "license": "MIT",
     "exports": {
-        ".": {
-            "types": "./dist/index.d.ts",
-            "import": "./dist/index.js"
+        "./*": {
+            "types": "./dist/*.d.ts",
+            "import": "./dist/*.js",
+            "require": "./dist/*.cjs"
         }
     },
     "scripts": {
         "build": "./build.sh",
-        "publish": "./publish.sh"
+        "publish": "./publish.sh",
+        "test": "tsc --noEmit && vitest --run"
+    },
+    "peerDependencies": {
+        "lang-tag": "*"
     },
     "dependencies": {},
+    "devDependencies": {
+        "@types/node": "^22.13.13",
+        "lang-tag": "*",
+        "pathe": "^2.0.3",
+        "typescript": "~5.7.2",
+        "vite": "^6.2.0",
+        "vite-plugin-dts": "^4.5.3",
+        "vitest": "^3.0.9"
+    },
     "publishConfig": {
         "access": "public"
     },
-    "license": "MIT"
+    "keywords": [
+        "i18n",
+        "translation",
+        "internationalization",
+        "localization",
+        "typescript",
+        "lang-tag",
+        "lang-tag-presets",
+        "presets",
+        "type-safe-translations"
+    ]
 }

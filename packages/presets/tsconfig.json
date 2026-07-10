@@ -1,9 +1,11 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "rootDir": "src",
-        "outDir": "dist"
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["src/*"],
+            "lang-tag": ["../core/src/index"]
+        }
     },
-    "include": ["src"],
-    "references": [{ "path": "../core" }]
+    "include": ["src", "tests"]
 }

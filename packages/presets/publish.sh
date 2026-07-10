@@ -2,10 +2,9 @@
 
 set -e
 
-#./build.sh
+./build.sh
 
 echo "Moving to dist directory and publishing..."
-#cd dist && npm publish
+cd dist && npm publish
 
 echo "Publication completed!"
-
