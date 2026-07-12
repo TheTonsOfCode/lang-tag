@@ -1,0 +1,18 @@
+to jest mikrooptymalizacja
+
+ale zeby robic tak ze robiąc lang() docelowo wołać już createCallableTranslations
+
+które przyjmuje obiekt proxy do wolania na tym co wypluje
+createCallableTranslations
+
+i wtedy by sie robilo coś aka.:
+
+const cc = createCallableTranslations(baseTranslations, config)
+
+useTranslations: () => {
+	const t = useNextIntlTranslations(namespace);
+
+	return cc.build({
+		transform: (path) => t(path)
+	})
+},
