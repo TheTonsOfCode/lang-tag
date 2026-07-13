@@ -235,6 +235,53 @@ module.exports = config;`;
         });
     });
 
+    it('should recursively collect nested as const and satisfies', () => {
+        writeFileSync(
+            join(TESTS_TEST_DIR, 'src/nested-type-modifiers.ts'),
+            `import { lang } from './lang-tag';
+
+            type SiteRemovalMessage = 'activeOrders' | 'lastSite';
+            type DashboardLabel = 'orders' | 'products';
+            export const pageTranslations = lang({
+                common: {
+                    typeMissing: 'Type is missing',
+                } as const,
+                siteRemoval: {
+                    activeOrders: 'The site has active orders',
+                    lastSite: 'The last site cannot be removed',
+                } satisfies Record<SiteRemovalMessage, string>,
+                dashboard: {
+                    labels: {
+                        orders: 'Orders',
+                        products: 'Products',
+                    } as const satisfies Record<DashboardLabel, string>,
+                },
+            }, { namespace: 'nested-modifiers' });`
+        );
+
+        execSync('npm run c', { cwd: TESTS_TEST_DIR, stdio: 'ignore' });
+
+        const translations = JSON.parse(
+            readFileSync(
+                join(TESTS_TEST_DIR, 'locales/en/nested-modifiers.json'),
+                'utf-8'
+            )
+        );
+        expect(translations).toEqual({
+            common: { typeMissing: 'Type is missing' },
+            siteRemoval: {
+                activeOrders: 'The site has active orders',
+                lastSite: 'The last site cannot be removed',
+            },
+            dashboard: {
+                labels: {
+                    orders: 'Orders',
+                    products: 'Products',
+                },
+            },
+        });
+    });
+
     it('should merge with existing translations', () => {
         // Create existing translations
         const outputDir = join(TESTS_TEST_DIR, 'locales/en');

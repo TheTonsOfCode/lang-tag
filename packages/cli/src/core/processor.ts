@@ -366,15 +366,23 @@ export class $LT_TagProcessor {
             }
 
             try {
-                parameter1 = JSON5.parse(parameter1Text);
+                parameter1 = JSON5.parse(
+                    this.stripNestedTypeModifiers(parameter1Text)
+                );
                 if (parameter2Text) {
                     try {
-                        parameter2 = JSON5.parse(parameter2Text);
+                        parameter2 = JSON5.parse(
+                            this.stripNestedTypeModifiers(parameter2Text)
+                        );
                     } catch (error) {
                         // Try to parse with escaped newlines in strings
                         try {
                             parameter2 = JSON5.parse(
-                                this.escapeNewlinesInStrings(parameter2Text)
+                                this.escapeNewlinesInStrings(
+                                    this.stripNestedTypeModifiers(
+                                        parameter2Text
+                                    )
+                                )
                             );
                         } catch {
                             validity = 'invalid-param-2';
@@ -385,7 +393,9 @@ export class $LT_TagProcessor {
                 // Try to parse with escaped newlines in strings (for multiline string support)
                 try {
                     parameter1 = JSON5.parse(
-                        this.escapeNewlinesInStrings(parameter1Text)
+                        this.escapeNewlinesInStrings(
+                            this.stripNestedTypeModifiers(parameter1Text)
+                        )
                     );
                 } catch {
                     validity = 'invalid-param-1';
@@ -452,7 +462,9 @@ export class $LT_TagProcessor {
             if (!newTranslationsString)
                 throw new Error('Tag must have translations provided!');
             try {
-                JSON5.parse(newTranslationsString);
+                JSON5.parse(
+                    this.stripNestedTypeModifiers(newTranslationsString)
+                );
             } catch (error) {
                 throw new Error(
                     `Tag translations are invalid object! Translations: ${newTranslationsString}`
@@ -465,7 +477,9 @@ export class $LT_TagProcessor {
             if (newConfigString) {
                 try {
                     if (typeof newConfigString === 'string')
-                        JSON5.parse(newConfigString);
+                        JSON5.parse(
+                            this.stripNestedTypeModifiers(newConfigString)
+                        );
                     else newConfigString = JSON5.stringify(newConfigString);
                 } catch (error) {
                     throw new Error(
@@ -545,6 +559,7 @@ export class $LT_TagProcessor {
     private startsWithSatisfies(text: string, index: number): boolean {
         return (
             text.startsWith('satisfies', index) &&
+            (index === 0 || !/[A-Za-z0-9_$]/.test(text[index - 1] || '')) &&
             !/[A-Za-z0-9_$]/.test(text[index + 'satisfies'.length] || '')
         );
     }
@@ -606,7 +621,10 @@ export class $LT_TagProcessor {
                 braceDepth === 0 &&
                 bracketDepth === 0 &&
                 parenDepth === 0;
-            if (atTopLevel && (char === ',' || char === ')')) {
+            if (
+                atTopLevel &&
+                (char === ',' || char === ')' || char === '}' || char === ']')
+            ) {
                 const type = text.substring(typeStart, i).trim();
                 return type ? { type, endIndex: i } : undefined;
             }
@@ -624,6 +642,77 @@ export class $LT_TagProcessor {
         }
 
         return undefined;
+    }
+
+    private stripNestedTypeModifiers(text: string): string {
+        let result = '';
+        let i = 0;
+
+        while (i < text.length) {
+            const char = text[i];
+            const nextChar = text[i + 1];
+
+            if (char === "'" || char === '"' || char === '`') {
+                const quote = char;
+                const start = i;
+                i++;
+                while (i < text.length) {
+                    if (text[i] === '\\') {
+                        i += 2;
+                    } else if (text[i] === quote) {
+                        i++;
+                        break;
+                    } else {
+                        i++;
+                    }
+                }
+                result += text.substring(start, i);
+                continue;
+            }
+
+            if (char === '/' && nextChar === '/') {
+                const start = i;
+                i += 2;
+                while (i < text.length && text[i] !== '\n') i++;
+                result += text.substring(start, i);
+                continue;
+            }
+            if (char === '/' && nextChar === '*') {
+                const start = i;
+                i += 2;
+                while (
+                    i < text.length - 1 &&
+                    !(text[i] === '*' && text[i + 1] === '/')
+                ) {
+                    i++;
+                }
+                i = Math.min(i + 2, text.length);
+                result += text.substring(start, i);
+                continue;
+            }
+
+            const asConstEnd = this.parseAsConst(text, i);
+            if (
+                asConstEnd !== undefined &&
+                (i === 0 || !/[A-Za-z0-9_$]/.test(text[i - 1]))
+            ) {
+                i = asConstEnd;
+                continue;
+            }
+
+            if (this.startsWithSatisfies(text, i)) {
+                const satisfies = this.parseSatisfiesType(text, i);
+                if (satisfies) {
+                    i = satisfies.endIndex;
+                    continue;
+                }
+            }
+
+            result += char;
+            i++;
+        }
+
+        return result;
     }
 
     private buildSkipRanges(fileContent: string): Array<[number, number]> {

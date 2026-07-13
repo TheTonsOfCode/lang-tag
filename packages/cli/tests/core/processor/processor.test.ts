@@ -213,6 +213,38 @@ describe('findLangMatches', () => {
         expect(tags[0].parameterTranslations.new).toBe('New order');
     });
 
+    it('should recursively parse nested as const and satisfies expressions', () => {
+        const content = `const pageTranslations = lang({
+            common: {
+                typeMissing: 'Type is missing',
+            } as const,
+            siteRemoval: {
+                activeOrders: 'The site has active orders',
+                lastSite: 'The last site cannot be removed',
+            } satisfies Record<SiteRemovalMessage, string>,
+            dashboard: {
+                labels: {
+                    orders: 'Orders',
+                    products: 'Products',
+                } as const satisfies Record<DashboardLabel, string>,
+            },
+        }, { namespace: 'experimental-langtag' });`;
+        const tags = processor.extractTags(content);
+
+        expect(tags).toHaveLength(1);
+        expect(tags[0].validity).toBe('ok');
+        expect(tags[0].parameterTranslations.common.typeMissing).toBe(
+            'Type is missing'
+        );
+        expect(tags[0].parameterTranslations.siteRemoval).toEqual({
+            activeOrders: 'The site has active orders',
+            lastSite: 'The last site cannot be removed',
+        });
+        expect(tags[0].parameterTranslations.dashboard.labels.products).toBe(
+            'Products'
+        );
+    });
+
     it('should find a translations-only lang tag with a complex satisfies type', () => {
         const content =
             "const status = lang({ new: 'New order' } satisfies Readonly<Record<'new' | 'done', string>>);";
@@ -1499,6 +1531,36 @@ describe('replaceLangMatches', () => {
         expect(finalTags[0].parameterTranslations.done).toBe('Done');
         expect(result).toContain(
             '} as const satisfies Record<Status, string>,'
+        );
+    });
+
+    it('should preserve nested type modifiers when replacing config', () => {
+        const content = `const pageTranslations = lang({
+            common: { typeMissing: 'Type is missing' } as const,
+            siteRemoval: {
+                activeOrders: 'The site has active orders',
+                lastSite: 'The last site cannot be removed',
+            } satisfies Record<SiteRemovalMessage, string>,
+            dashboard: {
+                labels: { orders: 'Orders' } as const satisfies Record<DashboardLabel, string>,
+            },
+        }, { namespace: 'old' });`;
+        const tags = processor.extractTags(content);
+
+        const result = processor.replaceTags(content, [
+            { tag: tags[0], config: { namespace: 'new' } },
+        ]);
+        const finalTags = processor.extractTags(result);
+
+        expect(finalTags).toHaveLength(1);
+        expect(finalTags[0].validity).toBe('ok');
+        expect(finalTags[0].parameterConfig.namespace).toBe('new');
+        expect(result).toContain("{ typeMissing: 'Type is missing' } as const");
+        expect(result).toContain(
+            '} satisfies Record<SiteRemovalMessage, string>'
+        );
+        expect(result).toContain(
+            '} as const satisfies Record<DashboardLabel, string>'
         );
     });
 });

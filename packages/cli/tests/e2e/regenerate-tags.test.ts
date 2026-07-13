@@ -606,6 +606,62 @@ describe('regenerate-tags command e2e tests', () => {
         expect(tag.satisfiesType).toBe('Record<Status, string>');
     });
 
+    it('should recursively preserve nested as const and satisfies', () => {
+        const filePath = join(
+            TESTS_TEST_DIR,
+            'src/validations/nested-modifiers.ts'
+        );
+        mkdirSync(join(TESTS_TEST_DIR, 'src/validations'), {
+            recursive: true,
+        });
+        writeFileSync(
+            filePath,
+            `import { lang } from '../lang-tag';
+
+            type SiteRemovalMessage = 'activeOrders' | 'lastSite';
+            type DashboardLabel = 'orders' | 'products';
+            export const pageTranslations = lang({
+                common: {
+                    typeMissing: 'Type is missing',
+                } as const,
+                siteRemoval: {
+                    activeOrders: 'The site has active orders',
+                    lastSite: 'The last site cannot be removed',
+                } satisfies Record<SiteRemovalMessage, string>,
+                dashboard: {
+                    labels: {
+                        orders: 'Orders',
+                        products: 'Products',
+                    } as const satisfies Record<DashboardLabel, string>,
+                },
+            }, { namespace: 'old' });`
+        );
+
+        execSync('npm run rt', { cwd: TESTS_TEST_DIR, stdio: 'ignore' });
+
+        const fileContent = readFileSync(filePath, 'utf-8');
+        expect(fileContent).toContain('} as const,');
+        expect(fileContent).toContain(
+            '} satisfies Record<SiteRemovalMessage, string>'
+        );
+        expect(fileContent).toContain(
+            '} as const satisfies Record<DashboardLabel, string>'
+        );
+
+        const processor = new $LT_TagProcessor(testConfig);
+        const tags = processor.extractTags(fileContent);
+        expect(tags).toHaveLength(1);
+        expect(tags[0].validity).toBe('ok');
+        expect(tags[0].parameterTranslations.siteRemoval.lastSite).toBe(
+            'The last site cannot be removed'
+        );
+        expect(tags[0].parameterTranslations.dashboard.labels.products).toBe(
+            'Products'
+        );
+        expect(tags[0].parameterConfig.namespace).toBe('validations');
+        expect(tags[0].parameterConfig.path).toBe('');
+    });
+
     it('should handle files with no lang tags', () => {
         // Create a test file with no lang tags
         const noTagsFile = `
