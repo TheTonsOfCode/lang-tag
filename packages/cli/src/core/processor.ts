@@ -170,8 +170,9 @@ export class $LT_TagProcessor {
             // Check if there's a second parameter
             let parameter1Text = fileContent.substring(braceStartIndex, i);
             let parameter2Text: string | undefined;
+            let satisfiesType: string | undefined;
 
-            // After first object, we expect either ',' (then second object) or ')' (end of call)
+            // After first object, allow a `satisfies Type` expression on translations.
             // Skip whitespace
             while (
                 i < fileContent.length &&
@@ -180,6 +181,23 @@ export class $LT_TagProcessor {
                     fileContent[i] === '\t')
             ) {
                 i++;
+            }
+
+            if (
+                this.config.translationArgPosition === 1 &&
+                this.startsWithSatisfies(fileContent, i)
+            ) {
+                const satisfies = this.parseSatisfiesType(fileContent, i);
+                if (!satisfies) {
+                    currentIndex = matchStartIndex + 1;
+                    continue;
+                }
+                satisfiesType = satisfies.type;
+                i = satisfies.endIndex;
+
+                while (i < fileContent.length && /\s/.test(fileContent[i])) {
+                    i++;
+                }
             }
 
             if (i >= fileContent.length) {
@@ -225,7 +243,8 @@ export class $LT_TagProcessor {
 
                     parameter2Text = fileContent.substring(secondParamStart, i);
 
-                    // After second object, skip whitespace
+                    // After second object, allow `satisfies Type` when translations
+                    // are configured as the second argument.
                     while (
                         i < fileContent.length &&
                         (fileContent[i] === ' ' ||
@@ -233,6 +252,29 @@ export class $LT_TagProcessor {
                             fileContent[i] === '\t')
                     ) {
                         i++;
+                    }
+
+                    if (
+                        this.config.translationArgPosition === 2 &&
+                        this.startsWithSatisfies(fileContent, i)
+                    ) {
+                        const satisfies = this.parseSatisfiesType(
+                            fileContent,
+                            i
+                        );
+                        if (!satisfies) {
+                            currentIndex = matchStartIndex + 1;
+                            continue;
+                        }
+                        satisfiesType = satisfies.type;
+                        i = satisfies.endIndex;
+
+                        while (
+                            i < fileContent.length &&
+                            /\s/.test(fileContent[i])
+                        ) {
+                            i++;
+                        }
                     }
 
                     // Handle trailing comma after second parameter (Prettier formatting)
@@ -338,6 +380,7 @@ export class $LT_TagProcessor {
                 fullMatch,
                 variableName,
                 genericType,
+                satisfiesType,
                 parameter1Text,
                 parameter2Text,
                 parameterTranslations,
@@ -421,13 +464,22 @@ export class $LT_TagProcessor {
                     ? newConfigString
                     : newTranslationsString;
 
+            const arg1Satisfies =
+                tag.satisfiesType && this.config.translationArgPosition === 1
+                    ? ` satisfies ${tag.satisfiesType}`
+                    : '';
+            const arg2Satisfies =
+                tag.satisfiesType && this.config.translationArgPosition === 2
+                    ? ` satisfies ${tag.satisfiesType}`
+                    : '';
+
             // Preserve generic type if it was present in the original tag
             const genericTypePart = tag.genericType
                 ? `<${tag.genericType}>`
                 : '';
 
-            let tagFunction = `${this.config.tagName}${genericTypePart}(${arg1}`;
-            if (arg2) tagFunction += `, ${arg2}`;
+            let tagFunction = `${this.config.tagName}${genericTypePart}(${arg1}${arg1Satisfies}`;
+            if (arg2) tagFunction += `, ${arg2}${arg2Satisfies}`;
             tagFunction += ')';
 
             if (tag.variableName)
@@ -450,6 +502,90 @@ export class $LT_TagProcessor {
         });
 
         return fileContent;
+    }
+
+    private startsWithSatisfies(text: string, index: number): boolean {
+        return (
+            text.startsWith('satisfies', index) &&
+            !/[A-Za-z0-9_$]/.test(text[index + 'satisfies'.length] || '')
+        );
+    }
+
+    private parseSatisfiesType(
+        text: string,
+        startIndex: number
+    ): { type: string; endIndex: number } | undefined {
+        let i = startIndex + 'satisfies'.length;
+        if (i >= text.length || !/\s/.test(text[i])) return undefined;
+
+        while (i < text.length && /\s/.test(text[i])) i++;
+        const typeStart = i;
+        let angleDepth = 0;
+        let braceDepth = 0;
+        let bracketDepth = 0;
+        let parenDepth = 0;
+
+        while (i < text.length) {
+            const char = text[i];
+            const nextChar = text[i + 1];
+
+            if (char === "'" || char === '"' || char === '`') {
+                const quote = char;
+                i++;
+                while (i < text.length) {
+                    if (text[i] === '\\') {
+                        i += 2;
+                    } else if (text[i] === quote) {
+                        i++;
+                        break;
+                    } else {
+                        i++;
+                    }
+                }
+                continue;
+            }
+
+            if (char === '/' && nextChar === '/') {
+                i += 2;
+                while (i < text.length && text[i] !== '\n') i++;
+                continue;
+            }
+            if (char === '/' && nextChar === '*') {
+                i += 2;
+                while (
+                    i < text.length - 1 &&
+                    !(text[i] === '*' && text[i + 1] === '/')
+                ) {
+                    i++;
+                }
+                if (i >= text.length - 1) return undefined;
+                i += 2;
+                continue;
+            }
+
+            const atTopLevel =
+                angleDepth === 0 &&
+                braceDepth === 0 &&
+                bracketDepth === 0 &&
+                parenDepth === 0;
+            if (atTopLevel && (char === ',' || char === ')')) {
+                const type = text.substring(typeStart, i).trim();
+                return type ? { type, endIndex: i } : undefined;
+            }
+
+            if (char === '<') angleDepth++;
+            else if (char === '>' && angleDepth > 0) angleDepth--;
+            else if (char === '{') braceDepth++;
+            else if (char === '}' && braceDepth > 0) braceDepth--;
+            else if (char === '[') bracketDepth++;
+            else if (char === ']' && bracketDepth > 0) bracketDepth--;
+            else if (char === '(') parenDepth++;
+            else if (char === ')' && parenDepth > 0) parenDepth--;
+
+            i++;
+        }
+
+        return undefined;
     }
 
     private buildSkipRanges(fileContent: string): Array<[number, number]> {

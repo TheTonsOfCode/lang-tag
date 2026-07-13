@@ -182,6 +182,32 @@ module.exports = config;`;
         });
     });
 
+    it('should collect translations using satisfies', () => {
+        writeFileSync(
+            join(TESTS_TEST_DIR, 'src/status.ts'),
+            `import { lang } from './lang-tag';
+
+            type Status = 'new' | 'done';
+            export const statusTranslations = lang({
+                new: 'New order',
+                done: 'Completed'
+            } satisfies Record<Status, string>, { namespace: 'status' });`
+        );
+
+        execSync('npm run c', { cwd: TESTS_TEST_DIR, stdio: 'ignore' });
+
+        const translations = JSON.parse(
+            readFileSync(
+                join(TESTS_TEST_DIR, 'locales/en/status.json'),
+                'utf-8'
+            )
+        );
+        expect(translations).toEqual({
+            new: 'New order',
+            done: 'Completed',
+        });
+    });
+
     it('should merge with existing translations', () => {
         // Create existing translations
         const outputDir = join(TESTS_TEST_DIR, 'locales/en');

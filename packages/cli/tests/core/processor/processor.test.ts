@@ -168,6 +168,38 @@ describe('findLangMatches', () => {
         expect(tags[0].parameterTranslations.name).toBe('test');
     });
 
+    it('should find lang tag with satisfies on translations', () => {
+        const content = `const status = lang({
+            new: 'New order',
+            done: 'Completed'
+        } satisfies Record<Status, string>, { namespace: 'orders' });`;
+        const tags = processor.extractTags(content);
+
+        expect(tags).toHaveLength(1);
+        expect(tags[0].satisfiesType).toBe('Record<Status, string>');
+        expect(tags[0].parameterTranslations).toEqual({
+            new: 'New order',
+            done: 'Completed',
+        });
+        expect(tags[0].parameterConfig.namespace).toBe('orders');
+        expect(tags[0].fullMatch).toContain(
+            '} satisfies Record<Status, string>,'
+        );
+    });
+
+    it('should find a translations-only lang tag with a complex satisfies type', () => {
+        const content =
+            "const status = lang({ new: 'New order' } satisfies Readonly<Record<'new' | 'done', string>>);";
+        const tags = processor.extractTags(content);
+
+        expect(tags).toHaveLength(1);
+        expect(tags[0].satisfiesType).toBe(
+            "Readonly<Record<'new' | 'done', string>>"
+        );
+        expect(tags[0].parameterTranslations.new).toBe('New order');
+        expect(tags[0].parameter2Text).toBeUndefined();
+    });
+
     // that test does not mean we handle array translations
     it('should find lang match with nested objects and arrays', () => {
         const content = `const translations = lang({
@@ -1372,6 +1404,33 @@ describe('replaceLangMatches', () => {
         expect(finalTags[0].parameterConfig.namespace).toBe('abc');
         expect(result).toContain('lang<{ id: string; name: string }>');
     });
+
+    it('should preserve satisfies when replacing translations and config', () => {
+        const content =
+            "const status = lang({ new: 'New order', done: 'Completed' } satisfies Record<Status, string>, { namespace: 'orders' });";
+        const tags = processor.extractTags(content);
+
+        const result = processor.replaceTags(content, [
+            {
+                tag: tags[0],
+                translations: {
+                    new: 'New',
+                    done: 'Done',
+                },
+                config: { namespace: 'status', path: 'labels' },
+            },
+        ]);
+        const finalTags = processor.extractTags(result);
+
+        expect(finalTags).toHaveLength(1);
+        expect(finalTags[0].satisfiesType).toBe('Record<Status, string>');
+        expect(finalTags[0].parameterTranslations.done).toBe('Done');
+        expect(finalTags[0].parameterConfig).toEqual({
+            namespace: 'status',
+            path: 'labels',
+        });
+        expect(result).toContain('} satisfies Record<Status, string>,');
+    });
 });
 
 describe('Error handling and edge cases', () => {
@@ -1747,6 +1806,20 @@ describe('findLangMatches with different config', () => {
         expect(tags[0].parameterConfig.namespace).toBe('common');
     });
 
+    it('should find satisfies on translations at position 2', () => {
+        const content =
+            "const text = t({ namespace: 'common' }, { new: 'New', done: 'Done' } satisfies Record<Status, string>);";
+        const tags = processorWithDifferentConfig.extractTags(content);
+
+        expect(tags).toHaveLength(1);
+        expect(tags[0].satisfiesType).toBe('Record<Status, string>');
+        expect(tags[0].parameterTranslations).toEqual({
+            new: 'New',
+            done: 'Done',
+        });
+        expect(tags[0].parameterConfig.namespace).toBe('common');
+    });
+
     it('should return no tags if no t function is found', () => {
         const content = "const text = lang({ key: 'hello' });";
         const tags = processorWithDifferentConfig.extractTags(content);
@@ -1918,6 +1991,26 @@ describe('replaceLangMatches with different config', () => {
         expect(tag2.parameterTranslations.message).toBe('Hi there');
         expect(tag2.parameterConfig.namespace).toBe('public');
         expect(tag2.parameterConfig.debug).toBe(false);
+    });
+
+    it('should preserve satisfies on translations at position 2', () => {
+        const content =
+            "const text = t({ namespace: 'common' }, { new: 'New', done: 'Done' } satisfies Record<Status, string>);";
+        const tags = processorWithDifferentConfig.extractTags(content);
+
+        const result = processorWithDifferentConfig.replaceTags(content, [
+            {
+                tag: tags[0],
+                translations: { new: 'New order', done: 'Completed' },
+                config: { namespace: 'orders' },
+            },
+        ]);
+        const finalTags = processorWithDifferentConfig.extractTags(result);
+
+        expect(finalTags).toHaveLength(1);
+        expect(finalTags[0].satisfiesType).toBe('Record<Status, string>');
+        expect(finalTags[0].parameterTranslations.done).toBe('Completed');
+        expect(result).toContain('} satisfies Record<Status, string>)');
     });
 });
 

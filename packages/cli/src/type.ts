@@ -208,6 +208,9 @@ export interface LangTagCLIProcessedTag {
     /** Generic type parameter if present (e.g., "ValidationTranslations" from "lang<ValidationTranslations>(...)") */
     genericType?: string;
 
+    /** Type used in a `satisfies` expression on the translations argument */
+    satisfiesType?: string;
+
     /** Character index in the whole text where the match starts */
     index: number;
     /** Line number (1-based) where the match was found */
