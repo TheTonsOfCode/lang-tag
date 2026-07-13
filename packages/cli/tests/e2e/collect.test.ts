@@ -182,7 +182,7 @@ module.exports = config;`;
         });
     });
 
-    it('should collect translations using satisfies', () => {
+    function collectStatusTranslations(typeSuffix: string) {
         writeFileSync(
             join(TESTS_TEST_DIR, 'src/status.ts'),
             `import { lang } from './lang-tag';
@@ -191,17 +191,44 @@ module.exports = config;`;
             export const statusTranslations = lang({
                 new: 'New order',
                 done: 'Completed'
-            } satisfies Record<Status, string>, { namespace: 'status' });`
+            }${typeSuffix}, { namespace: 'status' });`
         );
 
         execSync('npm run c', { cwd: TESTS_TEST_DIR, stdio: 'ignore' });
 
-        const translations = JSON.parse(
+        return JSON.parse(
             readFileSync(
                 join(TESTS_TEST_DIR, 'locales/en/status.json'),
                 'utf-8'
             )
         );
+    }
+
+    it('should collect translations using as const', () => {
+        const translations = collectStatusTranslations(' as const');
+
+        expect(translations).toEqual({
+            new: 'New order',
+            done: 'Completed',
+        });
+    });
+
+    it('should collect translations using satisfies', () => {
+        const translations = collectStatusTranslations(
+            ' satisfies Record<Status, string>'
+        );
+
+        expect(translations).toEqual({
+            new: 'New order',
+            done: 'Completed',
+        });
+    });
+
+    it('should collect translations using as const satisfies', () => {
+        const translations = collectStatusTranslations(
+            ' as const satisfies Record<Status, string>'
+        );
+
         expect(translations).toEqual({
             new: 'New order',
             done: 'Completed',

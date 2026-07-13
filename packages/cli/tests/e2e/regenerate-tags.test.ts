@@ -541,7 +541,7 @@ describe('regenerate-tags command e2e tests', () => {
         );
     });
 
-    it('should preserve satisfies when regenerating tags', () => {
+    function regenerateStatusTag(typeSuffix: string) {
         const filePath = join(
             TESTS_TEST_DIR,
             'src/validations/status-labels.ts'
@@ -557,24 +557,53 @@ describe('regenerate-tags command e2e tests', () => {
             export const statusTranslations = lang({
                 new: 'New order',
                 done: 'Completed'
-            } satisfies Record<Status, string>, { namespace: 'old' });`
+            }${typeSuffix}, { namespace: 'old' });`
         );
 
         execSync('npm run rt', { cwd: TESTS_TEST_DIR, stdio: 'ignore' });
 
         const fileContent = readFileSync(filePath, 'utf-8');
-        expect(fileContent).toContain('satisfies Record<Status, string>');
-
         const processor = new $LT_TagProcessor(testConfig);
         const tags = processor.extractTags(fileContent);
         expect(tags).toHaveLength(1);
-        expect(tags[0].satisfiesType).toBe('Record<Status, string>');
         expect(tags[0].parameterTranslations).toEqual({
             new: 'New order',
             done: 'Completed',
         });
         expect(tags[0].parameterConfig.namespace).toBe('validations');
         expect(tags[0].parameterConfig.path).toBe('');
+
+        return { fileContent, tag: tags[0] };
+    }
+
+    it('should preserve as const when regenerating tags', () => {
+        const { fileContent, tag } = regenerateStatusTag(' as const');
+
+        expect(fileContent).toContain('} as const,');
+        expect(tag.asConst).toBe(true);
+        expect(tag.satisfiesType).toBeUndefined();
+    });
+
+    it('should preserve satisfies when regenerating tags', () => {
+        const { fileContent, tag } = regenerateStatusTag(
+            ' satisfies Record<Status, string>'
+        );
+
+        expect(fileContent).toContain('satisfies Record<Status, string>');
+        expect(tag.asConst).toBe(false);
+        expect(tag.satisfiesType).toBe('Record<Status, string>');
+    });
+
+    it('should preserve as const satisfies when regenerating tags', () => {
+        const { fileContent, tag } = regenerateStatusTag(
+            ' as const satisfies Record<Status, string>'
+        );
+
+        expect(fileContent).toContain(
+            'as const satisfies Record<Status, string>'
+        );
+        expect(tag.asConst).toBe(true);
+        expect(tag.satisfiesType).toBe('Record<Status, string>');
     });
 
     it('should handle files with no lang tags', () => {

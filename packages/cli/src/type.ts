@@ -211,6 +211,9 @@ export interface LangTagCLIProcessedTag {
     /** Type used in a `satisfies` expression on the translations argument */
     satisfiesType?: string;
 
+    /** Whether the translations argument was followed by an `as const` assertion */
+    asConst?: boolean;
+
     /** Character index in the whole text where the match starts */
     index: number;
     /** Line number (1-based) where the match was found */

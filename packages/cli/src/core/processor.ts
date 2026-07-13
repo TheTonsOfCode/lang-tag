@@ -171,8 +171,9 @@ export class $LT_TagProcessor {
             let parameter1Text = fileContent.substring(braceStartIndex, i);
             let parameter2Text: string | undefined;
             let satisfiesType: string | undefined;
+            let asConst = false;
 
-            // After first object, allow a `satisfies Type` expression on translations.
+            // After first object, allow `as const` and `satisfies Type` on translations.
             // Skip whitespace
             while (
                 i < fileContent.length &&
@@ -181,6 +182,20 @@ export class $LT_TagProcessor {
                     fileContent[i] === '\t')
             ) {
                 i++;
+            }
+
+            if (this.config.translationArgPosition === 1) {
+                const asConstEnd = this.parseAsConst(fileContent, i);
+                if (asConstEnd !== undefined) {
+                    asConst = true;
+                    i = asConstEnd;
+                    while (
+                        i < fileContent.length &&
+                        /\s/.test(fileContent[i])
+                    ) {
+                        i++;
+                    }
+                }
             }
 
             if (
@@ -243,8 +258,8 @@ export class $LT_TagProcessor {
 
                     parameter2Text = fileContent.substring(secondParamStart, i);
 
-                    // After second object, allow `satisfies Type` when translations
-                    // are configured as the second argument.
+                    // After second object, allow `as const` and `satisfies Type`
+                    // when translations are configured as the second argument.
                     while (
                         i < fileContent.length &&
                         (fileContent[i] === ' ' ||
@@ -252,6 +267,20 @@ export class $LT_TagProcessor {
                             fileContent[i] === '\t')
                     ) {
                         i++;
+                    }
+
+                    if (this.config.translationArgPosition === 2) {
+                        const asConstEnd = this.parseAsConst(fileContent, i);
+                        if (asConstEnd !== undefined) {
+                            asConst = true;
+                            i = asConstEnd;
+                            while (
+                                i < fileContent.length &&
+                                /\s/.test(fileContent[i])
+                            ) {
+                                i++;
+                            }
+                        }
                     }
 
                     if (
@@ -381,6 +410,7 @@ export class $LT_TagProcessor {
                 variableName,
                 genericType,
                 satisfiesType,
+                asConst,
                 parameter1Text,
                 parameter2Text,
                 parameterTranslations,
@@ -464,13 +494,16 @@ export class $LT_TagProcessor {
                     ? newConfigString
                     : newTranslationsString;
 
-            const arg1Satisfies =
-                tag.satisfiesType && this.config.translationArgPosition === 1
-                    ? ` satisfies ${tag.satisfiesType}`
+            const translationTypeSuffix =
+                (tag.asConst ? ' as const' : '') +
+                (tag.satisfiesType ? ` satisfies ${tag.satisfiesType}` : '');
+            const arg1TypeSuffix =
+                this.config.translationArgPosition === 1
+                    ? translationTypeSuffix
                     : '';
-            const arg2Satisfies =
-                tag.satisfiesType && this.config.translationArgPosition === 2
-                    ? ` satisfies ${tag.satisfiesType}`
+            const arg2TypeSuffix =
+                this.config.translationArgPosition === 2
+                    ? translationTypeSuffix
                     : '';
 
             // Preserve generic type if it was present in the original tag
@@ -478,8 +511,8 @@ export class $LT_TagProcessor {
                 ? `<${tag.genericType}>`
                 : '';
 
-            let tagFunction = `${this.config.tagName}${genericTypePart}(${arg1}${arg1Satisfies}`;
-            if (arg2) tagFunction += `, ${arg2}${arg2Satisfies}`;
+            let tagFunction = `${this.config.tagName}${genericTypePart}(${arg1}${arg1TypeSuffix}`;
+            if (arg2) tagFunction += `, ${arg2}${arg2TypeSuffix}`;
             tagFunction += ')';
 
             if (tag.variableName)
@@ -502,6 +535,11 @@ export class $LT_TagProcessor {
         });
 
         return fileContent;
+    }
+
+    private parseAsConst(text: string, startIndex: number): number | undefined {
+        const match = /^as\s+const\b/.exec(text.substring(startIndex));
+        return match ? startIndex + match[0].length : undefined;
     }
 
     private startsWithSatisfies(text: string, index: number): boolean {
