@@ -33,6 +33,7 @@
     "scripts": {
         "dev": "vite",
         "build": "./build.sh",
+        "benchmark:processor": "vite-node benchmarks/processor.benchmark.ts",
         "publish": "./publish.sh",
         "pack-test-build": "./pack-test-build.sh",
         "test": "vitest --run --exclude '**/e2e/**'",
