@@ -1,0 +1,30 @@
+
+export function lang<const T extends LangTagOptionalTranslations>(baseTranslations: T, config?: TagConfig) {
+
+	...
+
+}
+
+lang.count = (params: {few?: string, other:? string}) => {}
+lub
+lang.{} = import("langtag/helpers")
+czy jakos tak
+
+
+
+///// Usage
+
+
+
+const pageTranslations = lang(
+	{
+		dashboard: {
+			products: 'Products',
+			revenue: 'Revenue',
+			orders: lang.count({
+				few: 'few orders',
+				other: 'a lot of orders'
+			})
+		},
+	}
+);
