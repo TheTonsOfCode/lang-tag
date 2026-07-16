@@ -1,6 +1,6 @@
 import type {
-    ResolvedPlaceholderTranslation,
     PlaceholderParamsOptions,
+    ResolvedPlaceholderTranslation,
 } from './placeholder-params';
 
 /**
@@ -95,8 +95,12 @@ export interface TranslationTransformContext<
     parentPath: string;
     /** The full path to the current translation key, including the base path from config. */
     path: string;
-    /** The path to the current translation key, relative to the root of the translations object (excluding the base path from config). */
-    unprefixedPath: string;
+    /**
+     * Path segments to the current translation key, relative to the root of the
+     * translations object (excluding the base path from config).
+     * Kept as an array so object keys that contain `.` are not split during lookup.
+     */
+    unprefixedPath: string[];
     /** The current translation key. */
     key: string;
     /** The raw string value of the translation. */

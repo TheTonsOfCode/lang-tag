@@ -28,18 +28,19 @@ function resolveTranslationFunction<T>(
 }
 
 /**
- * Retrieves a translation function from a nested translation object using a dot-separated path.
- * It is recommended to use an unprefixed path (a path that does not include the base path from the configuration)
- * with this function, as it operates on the structure of the callable translations object where keys are unprefixed.
+ * Retrieves a translation function from a nested translation object.
+ * Prefer passing path segments from `unprefixedPath` (a `string[]`) so keys that
+ * contain `.` are not incorrectly split. A dotted string is still accepted for
+ * backward compatibility, but cannot represent keys that themselves contain `.`.
  * @template T - The type of the translations object.
  * @param translations The object containing translation functions.
- * @param dottedPath A string path using dot notation (e.g., "user.profile.greeting"). This path should generally be unprefixed.
+ * @param path Unprefixed path segments, or a dotted string (e.g. `"user.profile.greeting"`).
  * @returns The translation function, or null if not found or invalid.
  */
 export function lookupTranslation<T>(
     translations: CallableTranslations<T>,
-    dottedPath: string
+    path: string | string[]
 ): ParameterizedTranslation | null {
-    const pathSegments = dottedPath.split('.');
+    const pathSegments = Array.isArray(path) ? path : path.split('.');
     return resolveTranslationFunction(translations, pathSegments);
 }

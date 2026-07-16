@@ -16,7 +16,7 @@ import {
  * @param strategy - The translation mapping strategy.
  * @param input - The translations object to transform.
  * @param currentParentPath - The current parent path for building full translation keys.
- * @param currentRelativeParentPath - The current relative parent path for building full translation keys.
+ * @param currentRelativeParentPath - Path segments relative to the translations root.
  * @returns An object with the same structure as input, but with strings replaced by callable functions.
  * @internal
  */
@@ -28,15 +28,13 @@ function transformTranslationsToFunctions<
     strategy: TranslationMappingStrategy<Config>,
     input: T,
     currentParentPath: string, // This includes config.path prefix
-    currentRelativeParentPath: string // This is the path relative to translations root
+    currentRelativeParentPath: string[] // Path relative to translations root (key segments)
 ): CallableTranslations<T> {
     const result: Record<string, any> = {};
 
     for (const [originalKey, originalValue] of Object.entries(input)) {
         const currentFullPath = `${currentParentPath}${originalKey}`;
-        const currentRelativePath = currentRelativeParentPath
-            ? `${currentRelativeParentPath}.${originalKey}`
-            : originalKey;
+        const currentRelativePath = [...currentRelativeParentPath, originalKey];
 
         if (typeof originalValue === 'object' && originalValue !== null) {
             result[originalKey] = transformTranslationsToFunctions(
@@ -49,7 +47,7 @@ function transformTranslationsToFunctions<
         } else if (typeof originalValue === 'string') {
             const createTranslationFunction = (
                 pathForFunc: string,
-                unprefixedPathForFunc: string,
+                unprefixedPathForFunc: string[],
                 keyForFunc: string,
                 valueForFunc: string
             ) => {
@@ -80,10 +78,10 @@ function transformTranslationsToFunctions<
                     keyProcessingContext,
                     (newKeyToAdd: string, valueForNewKey: string) => {
                         const pathForNewKey = currentParentPath + newKeyToAdd;
-                        const unprefixedPathForNewKey =
-                            currentRelativeParentPath
-                                ? `${currentRelativeParentPath}.${newKeyToAdd}`
-                                : newKeyToAdd;
+                        const unprefixedPathForNewKey = [
+                            ...currentRelativeParentPath,
+                            newKeyToAdd,
+                        ];
                         result[newKeyToAdd] = createTranslationFunction(
                             pathForNewKey,
                             unprefixedPathForNewKey,
@@ -139,6 +137,6 @@ export function createCallableTranslations<
         strategy,
         translations,
         basePath,
-        ''
+        []
     );
 }

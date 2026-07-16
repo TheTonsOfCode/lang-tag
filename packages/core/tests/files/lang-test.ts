@@ -21,10 +21,10 @@ export function lang<T extends LangTagTranslations>(
             const normalized = Context;
 
             return createCallableTranslations(translations, config, {
-                transform: ({ path, params, value }) => {
+                transform: ({ unprefixedPath, params, value }) => {
                     if (!normalized) return value;
 
-                    const fn = lookupTranslation(normalized, path);
+                    const fn = lookupTranslation(normalized, unprefixedPath);
 
                     if (fn) return fn(params);
 

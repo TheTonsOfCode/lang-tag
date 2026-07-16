@@ -49,7 +49,7 @@ describe('createCallableTranslations with unprefixedPath', () => {
         expect(transformMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 path: 'my.prefix.greeting',
-                unprefixedPath: 'greeting',
+                unprefixedPath: ['greeting'],
                 key: 'greeting',
                 value: 'Hello, {{name}}!',
             })
@@ -59,7 +59,7 @@ describe('createCallableTranslations with unprefixedPath', () => {
         expect(transformMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 path: 'my.prefix.farewell.formal',
-                unprefixedPath: 'farewell.formal',
+                unprefixedPath: ['farewell', 'formal'],
                 key: 'formal',
                 value: 'Goodbye, {{name}}.',
             })
@@ -69,7 +69,7 @@ describe('createCallableTranslations with unprefixedPath', () => {
         expect(transformMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 path: 'my.prefix.farewell.informal',
-                unprefixedPath: 'farewell.informal',
+                unprefixedPath: ['farewell', 'informal'],
                 key: 'informal',
                 value: 'Bye, {{name}}!',
             })
@@ -95,7 +95,7 @@ describe('createCallableTranslations with unprefixedPath', () => {
         expect(transformMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 path: 'greeting',
-                unprefixedPath: 'greeting',
+                unprefixedPath: ['greeting'],
                 key: 'greeting',
                 value: 'Hello, {{name}}!',
             })
@@ -105,7 +105,7 @@ describe('createCallableTranslations with unprefixedPath', () => {
         expect(transformMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 path: 'farewell.formal',
-                unprefixedPath: 'farewell.formal',
+                unprefixedPath: ['farewell', 'formal'],
                 key: 'formal',
                 value: 'Goodbye, {{name}}.',
             })
@@ -115,7 +115,7 @@ describe('createCallableTranslations with unprefixedPath', () => {
         expect(transformMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 path: 'farewell.informal',
-                unprefixedPath: 'farewell.informal',
+                unprefixedPath: ['farewell', 'informal'],
                 key: 'informal',
                 value: 'Bye, {{name}}!',
             })
@@ -147,7 +147,7 @@ describe('createCallableTranslations with unprefixedPath', () => {
         expect(processKeyMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 path: 'my.prefix.greeting',
-                unprefixedPath: 'greeting',
+                unprefixedPath: ['greeting'],
                 key: 'greeting',
                 value: 'Hello, {{name}}!',
             }),
@@ -159,7 +159,7 @@ describe('createCallableTranslations with unprefixedPath', () => {
         expect(processKeyMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 path: 'my.prefix.farewell.formal',
-                unprefixedPath: 'farewell.formal',
+                unprefixedPath: ['farewell', 'formal'],
                 key: 'formal',
                 value: 'Goodbye, {{name}}.',
             }),
@@ -169,7 +169,7 @@ describe('createCallableTranslations with unprefixedPath', () => {
         expect(processKeyMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 path: 'my.prefix.farewell.informal',
-                unprefixedPath: 'farewell.informal',
+                unprefixedPath: ['farewell', 'informal'],
                 key: 'informal',
                 value: 'Bye, {{name}}!',
             }),
@@ -197,7 +197,7 @@ describe('createCallableTranslations with unprefixedPath', () => {
         expect(processKeyMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 path: 'greeting',
-                unprefixedPath: 'greeting',
+                unprefixedPath: ['greeting'],
                 key: 'greeting',
                 value: 'Hello, {{name}}!',
             }),
@@ -206,11 +206,50 @@ describe('createCallableTranslations with unprefixedPath', () => {
         expect(processKeyMock).toHaveBeenCalledWith(
             expect.objectContaining({
                 path: 'farewell.formal',
-                unprefixedPath: 'farewell.formal',
+                unprefixedPath: ['farewell', 'formal'],
                 key: 'formal',
                 value: 'Goodbye, {{name}}.',
             }),
             expect.any(Function)
+        );
+    });
+
+    it('should keep keys that contain dots as a single unprefixedPath segment', () => {
+        const translationsWithDottedKey = {
+            codes: {
+                OrderStatus: {
+                    'AWAITING.PAYMENT': {
+                        label: 'Awaiting payment',
+                    },
+                },
+            },
+        };
+        const transformMock = vi.fn(translationTransformer);
+        const strategy: TranslationMappingStrategy<LangTagTranslationsConfig> =
+            {
+                transform: transformMock,
+            };
+
+        const callable = createCallableTranslations(
+            translationsWithDottedKey,
+            { namespace: 'test', path: 'app' },
+            strategy
+        );
+
+        callable.codes.OrderStatus['AWAITING.PAYMENT'].label();
+
+        expect(transformMock).toHaveBeenCalledWith(
+            expect.objectContaining({
+                path: 'app.codes.OrderStatus.AWAITING.PAYMENT.label',
+                unprefixedPath: [
+                    'codes',
+                    'OrderStatus',
+                    'AWAITING.PAYMENT',
+                    'label',
+                ],
+                key: 'label',
+                value: 'Awaiting payment',
+            })
         );
     });
 });
@@ -248,7 +287,7 @@ describe('lookupTranslation with unprefixed paths', () => {
         expect(greetingFn).toBeInstanceOf(Function);
         expect(greetingFn!({ name: 'Tester' })).toBe('Welcome, Tester!');
 
-        const settingsFn = lookupTranslation(callable, 'user.settings');
+        const settingsFn = lookupTranslation(callable, ['user', 'settings']);
         expect(settingsFn).toBeInstanceOf(Function);
         expect(settingsFn!()).toBe('Configure settings');
     });
@@ -261,7 +300,11 @@ describe('lookupTranslation with unprefixed paths', () => {
             strategy
         );
 
-        const greetingFn = lookupTranslation(callable, 'user.profile.greeting');
+        const greetingFn = lookupTranslation(callable, [
+            'user',
+            'profile',
+            'greeting',
+        ]);
         expect(greetingFn).toBeInstanceOf(Function);
         expect(greetingFn!({ name: 'User' })).toBe('Welcome, User!');
     });
@@ -298,5 +341,39 @@ describe('lookupTranslation with unprefixed paths', () => {
             'user.profile.nonexistent'
         );
         expect(nonExistentFn).toBeNull();
+    });
+
+    it('should lookup keys that contain dots when given path segments', () => {
+        const translationsWithDottedKey: LangTagTranslations = {
+            codes: {
+                OrderStatus: {
+                    'AWAITING.PAYMENT': {
+                        label: 'Awaiting payment',
+                    },
+                },
+            },
+        };
+        const callable = createCallableTranslations(
+            translationsWithDottedKey,
+            { namespace: 'app', path: 'my.app' },
+            strategy
+        );
+
+        // Dotted string incorrectly splits the key — still supported for plain paths
+        expect(
+            lookupTranslation(
+                callable,
+                'codes.OrderStatus.AWAITING.PAYMENT.label'
+            )
+        ).toBeNull();
+
+        const labelFn = lookupTranslation(callable, [
+            'codes',
+            'OrderStatus',
+            'AWAITING.PAYMENT',
+            'label',
+        ]);
+        expect(labelFn).toBeInstanceOf(Function);
+        expect(labelFn!()).toBe('Awaiting payment');
     });
 });
