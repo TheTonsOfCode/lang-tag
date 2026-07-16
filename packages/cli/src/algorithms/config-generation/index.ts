@@ -1,8 +1,8 @@
 /**
- * Predefined algorithms for onConfigGeneration hook.
+ * Predefined algorithms for the onConfigGeneration hook.
  *
- * These algorithms customize how translation tag configurations are generated
- * during collection and regeneration.
+ * The CLI calls that hook during `regenerate-tags`; these helpers turn a
+ * per-tag context into namespace/path (and related) configuration.
  */
 
 export {

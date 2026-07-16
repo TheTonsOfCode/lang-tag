@@ -43,7 +43,7 @@ export async function checkAndRegenerateFileLangTags(
             ? deepFreezeObject(tag.parameterConfig)
             : tag.parameterConfig;
 
-        const event = {
+        const context = {
             langTagConfig: config,
             logger,
             config: frozenConfig,
@@ -63,8 +63,8 @@ export async function checkAndRegenerateFileLangTags(
                     throw new Error('Wrong config data');
                 newConfig = updatedConfig;
                 shouldUpdate = true;
-                event.isSaved = true;
-                event.savedConfig = updatedConfig;
+                context.isSaved = true;
+                context.savedConfig = updatedConfig;
                 logger.debug(
                     'Called save for "{path}"{varName} with config "{config}" triggered by: ("{trigger}")',
                     {
@@ -79,19 +79,19 @@ export async function checkAndRegenerateFileLangTags(
             },
             getCurrentConfig: (): LangTagTranslationsConfig => {
                 if (
-                    event.savedConfig !== undefined &&
-                    event.savedConfig !== null
+                    context.savedConfig !== undefined &&
+                    context.savedConfig !== null
                 ) {
-                    return { ...event.savedConfig };
+                    return { ...context.savedConfig };
                 }
-                if (event.config) {
-                    return { ...event.config };
+                if (context.config) {
+                    return { ...context.config };
                 }
                 return {};
             },
         };
 
-        await config.onConfigGeneration(event);
+        await config.onConfigGeneration(context);
 
         // If save was not called, configuration should stay as it was
         if (!shouldUpdate) {

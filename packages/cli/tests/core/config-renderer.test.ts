@@ -36,7 +36,11 @@ describe('Config Renderer', () => {
         expect(result).toContain("tagName: 't'");
         expect(result).not.toContain("defaultNamespace: 'common'");
         expect(result).toContain('export default config;');
-        expect(result).toContain('onConfigGeneration: async event =>');
+        expect(result).toContain('onConfigGeneration: async context =>');
+        expect(result).toContain(
+            'Called by the Lang Tag CLI during `regenerate-tags`'
+        );
+        expect(result).toContain('`context` is the per-tag payload');
     });
 
     it('should render config for CJS library with dictionary collector', () => {
@@ -126,7 +130,7 @@ describe('Config Renderer', () => {
             moduleSystem: 'esm',
         });
 
-        expect(result).toContain('onConfigGeneration: async event =>');
+        expect(result).toContain('onConfigGeneration: async context =>');
         expect(result).toContain(
             'TODO: Implement your custom config generation logic here'
         );

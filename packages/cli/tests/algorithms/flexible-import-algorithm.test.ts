@@ -2,13 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { flexibleImportAlgorithm } from '@/algorithms/import/flexible-import-algorithm';
 import { ImportManager } from '@/core/import/import-manager';
-import { LangTagCLIImportEvent } from '@/type';
+import { LangTagCLIImportContext } from '@/type';
 
-// Helper function to create a mock event
-function createMockEvent(
+// Helper function to create a mock context
+function createMockContext(
     exports: Array<{ packageJSON: any; exportData: any }>,
     debug: boolean = false
-): LangTagCLIImportEvent {
+): LangTagCLIImportContext {
     const importManager = new ImportManager();
 
     vi.spyOn(importManager, 'importTag');
@@ -78,13 +78,13 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm();
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(3);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(3);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'greeting',
@@ -92,7 +92,7 @@ describe('flexibleImportAlgorithm', () => {
                     config: { namespace: 'common' },
                 }
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'farewell',
@@ -100,7 +100,7 @@ describe('flexibleImportAlgorithm', () => {
                     config: { namespace: 'common' },
                 }
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'ui.ts',
                 {
                     variableName: 'button',
@@ -126,12 +126,12 @@ describe('flexibleImportAlgorithm', () => {
                 },
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm();
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'unknown.ts',
                 {
                     variableName: 'test',
@@ -162,13 +162,13 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm(); // No options - use defaults
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(4);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(4);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'valid',
@@ -176,7 +176,7 @@ describe('flexibleImportAlgorithm', () => {
                     config: { namespace: 'common' },
                 }
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'translations2',
@@ -184,7 +184,7 @@ describe('flexibleImportAlgorithm', () => {
                     config: { namespace: 'common' },
                 }
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'translations3',
@@ -192,7 +192,7 @@ describe('flexibleImportAlgorithm', () => {
                     config: { namespace: 'common' },
                 }
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'another_valid',
@@ -219,29 +219,29 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true); // Enable debug
+            const context = createMockContext(exports, true); // Enable debug
             const algorithm = flexibleImportAlgorithm({
                 variableName: {
                     handleMissingVariableName: 'skip',
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(2);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 expect.objectContaining({
                     variableName: 'valid',
                 })
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 expect.objectContaining({
                     variableName: 'another_valid',
                 })
             );
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping tag without variableName in package1/common.ts'
             );
         });
@@ -258,16 +258,16 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 variableName: {
                     prefixWithPackageName: true,
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'my_package_greeting',
@@ -287,7 +287,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 variableName: {
                     prefixWithPackageName: true,
@@ -295,9 +295,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'scope_package_greeting',
@@ -317,7 +317,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 variableName: {
                     prefixWithPackageName: true,
@@ -325,9 +325,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'package_greeting',
@@ -347,7 +347,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 variableName: {
                     prefixWithPackageName: true,
@@ -355,9 +355,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'myPackageMyVariable',
@@ -377,7 +377,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 variableName: {
                     prefixWithPackageName: true,
@@ -385,9 +385,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'my_package_my_variable',
@@ -418,17 +418,17 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 variableName: {
                     handleMissingVariableName: 'auto-generate',
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(4);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(4);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'valid',
@@ -436,7 +436,7 @@ describe('flexibleImportAlgorithm', () => {
                     config: { namespace: 'common' },
                 }
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'translations2',
@@ -444,7 +444,7 @@ describe('flexibleImportAlgorithm', () => {
                     config: { namespace: 'common' },
                 }
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'translations3',
@@ -452,7 +452,7 @@ describe('flexibleImportAlgorithm', () => {
                     config: { namespace: 'common' },
                 }
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'another_valid',
@@ -482,7 +482,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 variableName: {
                     handleMissingVariableName: (
@@ -497,10 +497,10 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(3);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(3);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'valid',
@@ -508,7 +508,7 @@ describe('flexibleImportAlgorithm', () => {
                     config: { namespace: 'common' },
                 }
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'my_package_common_2',
@@ -516,7 +516,7 @@ describe('flexibleImportAlgorithm', () => {
                     config: { namespace: 'common' },
                 }
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'my_package_common_3',
@@ -541,7 +541,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 variableName: {
                     prefixWithPackageName: true,
@@ -550,9 +550,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'myPackageTranslations1',
@@ -572,12 +572,12 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm();
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'my$variable',
@@ -597,12 +597,12 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm();
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'my$variable$name',
@@ -622,12 +622,12 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm();
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: '$123variable',
@@ -647,14 +647,14 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 variableName: {
                     sanitizeVariableName: false,
                 },
             });
 
-            expect(() => algorithm(event)).toThrow(
+            expect(() => algorithm(context)).toThrow(
                 'Invalid JavaScript identifier: "my.variable"'
             );
         });
@@ -669,16 +669,16 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 variableName: {
                     case: 'upper',
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'MY$VARIABLE$NAME',
@@ -701,10 +701,10 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm();
 
-            expect(() => algorithm(event)).toThrow(
+            expect(() => algorithm(context)).toThrow(
                 'Duplicate variable name "greeting" in file "common.ts". Variable names must be unique within the same file.'
             );
         });
@@ -725,23 +725,23 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     groupByPackage: true,
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(2);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'my-package.ts',
                 expect.objectContaining({
                     variableName: 'greeting',
                 })
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'my-package.ts',
                 expect.objectContaining({
                     variableName: 'button',
@@ -759,16 +759,16 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     includePackageInPath: true,
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'my-package/common.ts',
                 {
                     variableName: 'greeting',
@@ -788,7 +788,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     groupByPackage: true,
@@ -796,9 +796,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'scope-package.ts',
                 {
                     variableName: 'greeting',
@@ -818,7 +818,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     includePackageInPath: true,
@@ -826,9 +826,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'myPackage/myFile.ts',
                 {
                     variableName: 'greeting',
@@ -856,23 +856,23 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true); // Enable debug
+            const context = createMockContext(exports, true); // Enable debug
             const algorithm = flexibleImportAlgorithm({
                 exclude: {
                     packages: ['excluded-package'],
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(1);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(1);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 expect.objectContaining({
                     variableName: 'greeting',
                 })
             );
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping excluded package: excluded-package'
             );
         });
@@ -903,26 +903,26 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true); // Enable debug
+            const context = createMockContext(exports, true); // Enable debug
             const algorithm = flexibleImportAlgorithm({
                 exclude: {
                     namespaces: ['admin.*', 'internal*'],
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(1);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(1);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 expect.objectContaining({
                     variableName: 'greeting',
                 })
             );
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping excluded namespace: admin.user'
             );
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping excluded namespace: internal'
             );
         });
@@ -958,17 +958,17 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true); // Enable debug
+            const context = createMockContext(exports, true); // Enable debug
             const algorithm = flexibleImportAlgorithm({
                 exclude: {
                     namespaces: ['admin.*', 'internal*'],
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(1);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(1);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 expect.objectContaining({
                     variableName: 'greeting',
@@ -994,23 +994,23 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true); // Enable debug
+            const context = createMockContext(exports, true); // Enable debug
             const algorithm = flexibleImportAlgorithm({
                 include: {
                     packages: ['allowed-package'],
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(1);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(1);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 expect.objectContaining({
                     variableName: 'greeting',
                 })
             );
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping package not in include list: excluded-package'
             );
         });
@@ -1041,29 +1041,29 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true); // Enable debug
+            const context = createMockContext(exports, true); // Enable debug
             const algorithm = flexibleImportAlgorithm({
                 include: {
                     namespaces: ['common', 'admin.*'],
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(2);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 expect.objectContaining({
                     variableName: 'greeting',
                 })
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 expect.objectContaining({
                     variableName: 'admin_action',
                 })
             );
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping namespace not in include list: internal'
             );
         });
@@ -1096,32 +1096,32 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true); // Enable debug
+            const context = createMockContext(exports, true); // Enable debug
             const algorithm = flexibleImportAlgorithm({
                 include: {
                     packages: ['@company/ui-*'],
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(2);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'button.ts',
                 expect.objectContaining({
                     variableName: 'primary',
                 })
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'input.ts',
                 expect.objectContaining({
                     variableName: 'text',
                 })
             );
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping package not in include list: @company/utils-helpers'
             );
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping package not in include list: other-package'
             );
         });
@@ -1162,41 +1162,41 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true); // Enable debug
+            const context = createMockContext(exports, true); // Enable debug
             const algorithm = flexibleImportAlgorithm({
                 include: {
                     namespaces: ['ui.*', 'admin.*'],
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(4);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(4);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 expect.objectContaining({
                     variableName: 'greeting',
                 })
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 expect.objectContaining({
                     variableName: 'button',
                 })
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 expect.objectContaining({
                     variableName: 'admin_user',
                 })
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 expect.objectContaining({
                     variableName: 'admin_settings',
                 })
             );
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping namespace not in include list: internal.util'
             );
         });
@@ -1251,7 +1251,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true); // Enable debug
+            const context = createMockContext(exports, true); // Enable debug
             const algorithm = flexibleImportAlgorithm({
                 include: {
                     packages: ['@company/ui-*'],
@@ -1261,25 +1261,25 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(2);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'button.ts',
                 expect.objectContaining({
                     variableName: 'primary',
                 })
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'input.ts',
                 expect.objectContaining({
                     variableName: 'text',
                 })
             );
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping package not in include list: @company/internal-lib'
             );
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping excluded namespace: admin.ui'
             );
         });
@@ -1302,17 +1302,17 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true);
+            const context = createMockContext(exports, true);
             const algorithm = flexibleImportAlgorithm({
                 include: {
                     packages: ['exact-match'],
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(1);
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(1);
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping package not in include list: no-match'
             );
         });
@@ -1339,17 +1339,17 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true);
+            const context = createMockContext(exports, true);
             const algorithm = flexibleImportAlgorithm({
                 include: {
                     packages: ['ui-*'],
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(2);
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping package not in include list: utils-helpers'
             );
         });
@@ -1376,17 +1376,17 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true);
+            const context = createMockContext(exports, true);
             const algorithm = flexibleImportAlgorithm({
                 include: {
                     packages: ['@company/*'],
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(2);
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping package not in include list: @other/ui-button'
             );
         });
@@ -1422,20 +1422,20 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true);
+            const context = createMockContext(exports, true);
             const algorithm = flexibleImportAlgorithm({
                 include: {
                     namespaces: ['ui.*'],
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(2);
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping namespace not in include list: admin.user'
             );
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping namespace not in include list: internal.util'
             );
         });
@@ -1462,17 +1462,17 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true);
+            const context = createMockContext(exports, true);
             const algorithm = flexibleImportAlgorithm({
                 include: {
                     packages: ['ui-*', 'utils-*'],
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(2);
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping package not in include list: other-lib'
             );
         });
@@ -1487,17 +1487,17 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true);
+            const context = createMockContext(exports, true);
             const algorithm = flexibleImportAlgorithm({
                 include: {
                     packages: [],
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(0);
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(0);
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping package not in include list: package1'
             );
         });
@@ -1530,20 +1530,20 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true);
+            const context = createMockContext(exports, true);
             const algorithm = flexibleImportAlgorithm({
                 include: {
                     packages: ['@company/ui-*-v*'],
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(2);
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping package not in include list: @company/utils-helpers-v3'
             );
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Skipping package not in include list: @other/ui-button-v2'
             );
         });
@@ -1595,7 +1595,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true); // Enable debug
+            const context = createMockContext(exports, true); // Enable debug
             const algorithm = flexibleImportAlgorithm({
                 variableName: {
                     prefixWithPackageName: true,
@@ -1613,12 +1613,12 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(3);
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(3);
 
             // UI Button package
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'button.ts',
                 {
                     variableName: 'uiButtonPrimary',
@@ -1626,7 +1626,7 @@ describe('flexibleImportAlgorithm', () => {
                     config: { namespace: 'ui' },
                 }
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'button.ts',
                 {
                     variableName: 'uiButtonSecondary',
@@ -1636,7 +1636,7 @@ describe('flexibleImportAlgorithm', () => {
             );
 
             // Utils package
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'helpers.ts',
                 {
                     variableName: 'utilsHelpersFormat',
@@ -1648,23 +1648,23 @@ describe('flexibleImportAlgorithm', () => {
 
         it('should handle empty exports array', () => {
             const exports: any[] = [];
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm();
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).not.toHaveBeenCalled();
+            expect(context.importManager.importTag).not.toHaveBeenCalled();
         });
 
         it('should handle packages with empty files array', () => {
             const exports = [createMockExportData('empty-package', [])];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm();
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).not.toHaveBeenCalled();
+            expect(context.importManager.importTag).not.toHaveBeenCalled();
         });
 
         it('should handle files with empty tags array', () => {
@@ -1677,12 +1677,12 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm();
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).not.toHaveBeenCalled();
+            expect(context.importManager.importTag).not.toHaveBeenCalled();
         });
     });
 
@@ -1697,15 +1697,15 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports, true); // Enable debug
+            const context = createMockContext(exports, true); // Enable debug
             const algorithm = flexibleImportAlgorithm();
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Processing library: test-package'
             );
-            expect(event.logger.debug).toHaveBeenCalledWith(
+            expect(context.logger.debug).toHaveBeenCalledWith(
                 'Imported: greeting -> common.ts'
             );
         });
@@ -1723,16 +1723,16 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     case: 'no',
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'layout-components/translation-manager.ts',
                 {
                     variableName: 'greeting',
@@ -1753,16 +1753,16 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     case: 'camel',
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'layoutComponents/translationManager.ts',
                 {
                     variableName: 'greeting',
@@ -1783,16 +1783,16 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     case: 'kebab',
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'layout-components/translation-manager.ts',
                 {
                     variableName: 'greeting',
@@ -1813,16 +1813,16 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     case: 'snake',
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'layout_components/translation_manager.ts',
                 {
                     variableName: 'greeting',
@@ -1843,7 +1843,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     includePackageInPath: true,
@@ -1851,9 +1851,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'my-package/layout-components/translation-manager.ts',
                 {
                     variableName: 'greeting',
@@ -1874,7 +1874,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     includePackageInPath: true,
@@ -1883,9 +1883,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'scope-my-package/layout-components/translation-manager.ts',
                 {
                     variableName: 'greeting',
@@ -1910,7 +1910,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     groupByPackage: true,
@@ -1918,10 +1918,10 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(2);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'my-package.ts',
                 {
                     variableName: 'greeting',
@@ -1929,7 +1929,7 @@ describe('flexibleImportAlgorithm', () => {
                     config: { namespace: 'common' },
                 }
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'my-package.ts',
                 {
                     variableName: 'farewell',
@@ -1954,7 +1954,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     includePackageInPath: true,
@@ -1963,10 +1963,10 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(2);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'my_package/src/components/ui/button_component.ts',
                 {
                     variableName: 'buttonText',
@@ -1974,7 +1974,7 @@ describe('flexibleImportAlgorithm', () => {
                     config: { namespace: 'common' },
                 }
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'my_package/src/utils/helper_functions.ts',
                 {
                     variableName: 'helperMessage',
@@ -1994,16 +1994,16 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     case: 'pascal',
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'Components/Ui/ButtonComponent.ts',
                 {
                     variableName: 'buttonText',
@@ -2023,16 +2023,16 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     case: 'constant',
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'COMPONENTS/UI/BUTTON_COMPONENT.ts',
                 {
                     variableName: 'buttonText',
@@ -2053,7 +2053,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     case: {
@@ -2063,9 +2063,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'layoutComponents/TranslationManager.ts',
                 {
                     variableName: 'greeting',
@@ -2086,7 +2086,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     includePackageInPath: true,
@@ -2097,9 +2097,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'MyPackage/LayoutComponents/translation_manager.ts',
                 {
                     variableName: 'greeting',
@@ -2120,7 +2120,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 filePath: {
                     includePackageInPath: true,
@@ -2132,9 +2132,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'my_package/src/components/ui/buttonComponent.ts',
                 {
                     variableName: 'buttonText',
@@ -2159,13 +2159,13 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm();
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(2);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'greeting',
@@ -2173,7 +2173,7 @@ describe('flexibleImportAlgorithm', () => {
                     config: null,
                 }
             );
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'farewell',
@@ -2199,17 +2199,17 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 exclude: {
                     namespaces: ['admin.*'],
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledTimes(1);
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledTimes(1);
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'common.ts',
                 {
                     variableName: 'greeting',
@@ -2229,7 +2229,7 @@ describe('flexibleImportAlgorithm', () => {
                 ]),
             ];
 
-            const event = createMockEvent(exports);
+            const context = createMockContext(exports);
             const algorithm = flexibleImportAlgorithm({
                 variableName: {
                     prefixWithPackageName: true,
@@ -2243,9 +2243,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(event);
+            algorithm(context);
 
-            expect(event.importManager.importTag).toHaveBeenCalledWith(
+            expect(context.importManager.importTag).toHaveBeenCalledWith(
                 'ui-components.ts',
                 {
                     variableName: 'myOrgUiComponentsPrimary',
@@ -2258,7 +2258,7 @@ describe('flexibleImportAlgorithm', () => {
 
     describe('configRemap functionality', () => {
         it('should apply config remapping when provided', () => {
-            const mockEvent = createMockEvent([
+            const mockContext = createMockContext([
                 createMockExportData('test-package', [
                     {
                         relativeFilePath: 'components/Button.ts',
@@ -2283,9 +2283,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
-            expect(mockEvent.importManager.importTag).toHaveBeenCalledWith(
+            expect(mockContext.importManager.importTag).toHaveBeenCalledWith(
                 'components/Button.ts',
                 expect.objectContaining({
                     variableName: 'buttonText',
@@ -2296,7 +2296,7 @@ describe('flexibleImportAlgorithm', () => {
         });
 
         it('should remove config when configRemap returns null', () => {
-            const mockEvent = createMockEvent([
+            const mockContext = createMockContext([
                 createMockExportData('no-config-package', [
                     {
                         relativeFilePath: 'components/Button.ts',
@@ -2321,9 +2321,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
-            expect(mockEvent.importManager.importTag).toHaveBeenCalledWith(
+            expect(mockContext.importManager.importTag).toHaveBeenCalledWith(
                 'components/Button.ts',
                 expect.objectContaining({
                     variableName: 'buttonText',
@@ -2334,7 +2334,7 @@ describe('flexibleImportAlgorithm', () => {
         });
 
         it('should provide correct context to configRemap function', () => {
-            const mockEvent = createMockEvent([
+            const mockContext = createMockContext([
                 createMockExportData('context-test', [
                     {
                         relativeFilePath: 'admin/User.ts',
@@ -2355,7 +2355,7 @@ describe('flexibleImportAlgorithm', () => {
                 configRemap: configRemapSpy,
             });
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
             expect(configRemapSpy).toHaveBeenCalledWith(
                 { namespace: 'common' },
@@ -2369,7 +2369,7 @@ describe('flexibleImportAlgorithm', () => {
         });
 
         it('should import tag without config when configRemap returns null', () => {
-            const mockEvent = createMockEvent([
+            const mockContext = createMockContext([
                 createMockExportData('mixed-package', [
                     {
                         relativeFilePath: 'components/Button.ts',
@@ -2399,12 +2399,14 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
-            expect(mockEvent.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(mockContext.importManager.importTag).toHaveBeenCalledTimes(
+                2
+            );
 
             // First tag should have config
-            expect(mockEvent.importManager.importTag).toHaveBeenNthCalledWith(
+            expect(mockContext.importManager.importTag).toHaveBeenNthCalledWith(
                 1,
                 'components/Button.ts',
                 expect.objectContaining({
@@ -2415,7 +2417,7 @@ describe('flexibleImportAlgorithm', () => {
             );
 
             // Second tag should have null config
-            expect(mockEvent.importManager.importTag).toHaveBeenNthCalledWith(
+            expect(mockContext.importManager.importTag).toHaveBeenNthCalledWith(
                 2,
                 'components/Button.ts',
                 expect.objectContaining({
@@ -2427,7 +2429,7 @@ describe('flexibleImportAlgorithm', () => {
         });
 
         it('should use customVariableName when provided', () => {
-            const mockEvent = createMockEvent([
+            const mockContext = createMockContext([
                 createMockExportData('test-package', [
                     {
                         relativeFilePath: 'components/Button.ts',
@@ -2465,12 +2467,14 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
-            expect(mockEvent.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(mockContext.importManager.importTag).toHaveBeenCalledTimes(
+                2
+            );
 
             // First tag should have custom name
-            expect(mockEvent.importManager.importTag).toHaveBeenNthCalledWith(
+            expect(mockContext.importManager.importTag).toHaveBeenNthCalledWith(
                 1,
                 'components/Button.ts',
                 expect.objectContaining({
@@ -2481,7 +2485,7 @@ describe('flexibleImportAlgorithm', () => {
             );
 
             // Second tag should have custom name
-            expect(mockEvent.importManager.importTag).toHaveBeenNthCalledWith(
+            expect(mockContext.importManager.importTag).toHaveBeenNthCalledWith(
                 2,
                 'components/Button.ts',
                 expect.objectContaining({
@@ -2493,7 +2497,7 @@ describe('flexibleImportAlgorithm', () => {
         });
 
         it('should apply transformations to customVariableName result', () => {
-            const mockEvent = createMockEvent([
+            const mockContext = createMockContext([
                 createMockExportData('test-package', [
                     {
                         relativeFilePath: 'components/Button.ts',
@@ -2520,9 +2524,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
-            expect(mockEvent.importManager.importTag).toHaveBeenCalledWith(
+            expect(mockContext.importManager.importTag).toHaveBeenCalledWith(
                 'components/Button.ts',
                 expect.objectContaining({
                     variableName: 'testPackageCustomNameWithUnderscores', // camelCase + prefix + sanitized
@@ -2533,7 +2537,7 @@ describe('flexibleImportAlgorithm', () => {
         });
 
         it('should fall back to original naming when customVariableName returns null', () => {
-            const mockEvent = createMockEvent([
+            const mockContext = createMockContext([
                 createMockExportData('fallback-package', [
                     {
                         relativeFilePath: 'components/Button.ts',
@@ -2557,9 +2561,9 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
-            expect(mockEvent.importManager.importTag).toHaveBeenCalledWith(
+            expect(mockContext.importManager.importTag).toHaveBeenCalledWith(
                 'components/Button.ts',
                 expect.objectContaining({
                     variableName: 'originalName',
@@ -2570,7 +2574,7 @@ describe('flexibleImportAlgorithm', () => {
         });
 
         it('should provide correct context to customVariableName function', () => {
-            const mockEvent = createMockEvent([
+            const mockContext = createMockContext([
                 createMockExportData('context-test', [
                     {
                         relativeFilePath: 'admin/User.ts',
@@ -2595,7 +2599,7 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
             expect(customVariableNameSpy).toHaveBeenCalledWith({
                 packageName: 'context-test',
@@ -2611,7 +2615,7 @@ describe('flexibleImportAlgorithm', () => {
         });
 
         it('should handle mixed custom and fallback naming', () => {
-            const mockEvent = createMockEvent([
+            const mockContext = createMockContext([
                 createMockExportData('mixed-package', [
                     {
                         relativeFilePath: 'components/Button.ts',
@@ -2644,12 +2648,14 @@ describe('flexibleImportAlgorithm', () => {
                 },
             });
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
-            expect(mockEvent.importManager.importTag).toHaveBeenCalledTimes(2);
+            expect(mockContext.importManager.importTag).toHaveBeenCalledTimes(
+                2
+            );
 
             // First tag should have custom name
-            expect(mockEvent.importManager.importTag).toHaveBeenNthCalledWith(
+            expect(mockContext.importManager.importTag).toHaveBeenNthCalledWith(
                 1,
                 'components/Button.ts',
                 expect.objectContaining({
@@ -2660,7 +2666,7 @@ describe('flexibleImportAlgorithm', () => {
             );
 
             // Second tag should have original name (fallback)
-            expect(mockEvent.importManager.importTag).toHaveBeenNthCalledWith(
+            expect(mockContext.importManager.importTag).toHaveBeenNthCalledWith(
                 2,
                 'components/Button.ts',
                 expect.objectContaining({
@@ -2672,7 +2678,7 @@ describe('flexibleImportAlgorithm', () => {
         });
 
         it('should work without configRemap function', () => {
-            const mockEvent = createMockEvent([
+            const mockContext = createMockContext([
                 createMockExportData('no-remap', [
                     {
                         relativeFilePath: 'components/Button.ts',
@@ -2689,9 +2695,9 @@ describe('flexibleImportAlgorithm', () => {
 
             const algorithm = flexibleImportAlgorithm({});
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
-            expect(mockEvent.importManager.importTag).toHaveBeenCalledWith(
+            expect(mockContext.importManager.importTag).toHaveBeenCalledWith(
                 'components/Button.ts',
                 expect.objectContaining({
                     variableName: 'buttonText',

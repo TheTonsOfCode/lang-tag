@@ -5,7 +5,7 @@ Automatically generates `namespace` and `path` configuration from file path stru
 ## How It Works
 
 1. **Extract Path Segments**
-    - Takes the `relativePath` from the event
+    - Takes the `relativePath` from the context
     - Splits it into directory segments using path separator
 
 2. **Handle Filename** (option `includeFileName`)
@@ -55,8 +55,8 @@ Automatically generates `namespace` and `path` configuration from file path stru
     - `false`: Always includes namespace even if it's the default
 
 11. **Save Configuration**
-    - Calls `event.save()` with the generated config
-    - If config would be empty and namespace is default: `event.save(undefined)` to clear
+    - Calls `context.save()` with the generated config
+    - If config would be empty and namespace is default: `context.save(undefined)` to clear
 
 ## Configuration Options
 

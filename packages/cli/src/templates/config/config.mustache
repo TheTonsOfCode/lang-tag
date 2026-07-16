@@ -70,57 +70,61 @@ const config = {
 {{#usePathBased}}
 {{#addComments}}
     /**
+     * Called by the Lang Tag CLI during `regenerate-tags` (once per tag) — not at app runtime.
+     * `context` is the per-tag payload: file path, current config, and context.save(...).
+     *
      * Automatically generates namespace/path from file location.
      * Example: src/features/auth/LoginForm.tsx → { namespace: 'auth', path: 'loginForm' }
-     * 
+     *
      * To customize, modify generator options above or add custom logic:
      * - Change case formatting (namespaceCase, pathCase)
      * - Ignore specific directories (ignoreDirectories)
      * - Add path transformation rules (pathRules)
      */
 {{/addComments}}
-    onConfigGeneration: async event => {
-        // We do not modify imported configurations
-        if (event.isImportedLibrary) return;
+    onConfigGeneration: async context => {
+        // Skip tags imported from libraries
+        if (context.isImportedLibrary) return;
 {{#useKeeper}}
-        if (event.config?.keep === 'both') return;
+        if (context.config?.keep === 'both') return;
 {{/useKeeper}}
         
-        await generator(event);
+        await generator(context);
 {{#useKeeper}}
-        await keeper(event);
+        await keeper(context);
 {{/useKeeper}}
     },
 {{/usePathBased}}
 {{#useCustom}}
 {{#addComments}}
     /**
-     * Custom hook to generate namespace/path for each tag based on file location.
-     * 
-     * Sample properties:
-     * - event.relativePath: File path relative to project root (e.g., 'src/auth/Login.tsx')
-     * - event.config: Current tag config (may be undefined or contain user-provided values)
-     * - event.save(newConfig): Save new config. Example: event.save({ namespace: 'auth', path: 'login' })
-     * 
-     * Example - generate from directory structure:
-     *   const segments = event.relativePath.split('/').slice(1, -1);
-     *   event.save({ namespace: segments[0], path: segments.slice(1).join('.') });
+     * Called by the Lang Tag CLI during `regenerate-tags` (once per tag) — not at app runtime.
+     * `context` is the per-tag payload — use context.save(...) to write namespace/path back into the source file.
+     *
+     * Useful fields:
+     * - context.relativePath: file path relative to project root (e.g. 'src/auth/Login.tsx')
+     * - context.config: current tag config (may be undefined or already set)
+     * - context.save(newConfig): persist a new config, e.g. context.save({ namespace: 'auth', path: 'login' })
+     *
+     * Example — derive from directory structure:
+     *   const segments = context.relativePath.split('/').slice(1, -1);
+     *   context.save({ namespace: segments[0], path: segments.slice(1).join('.') });
      */
 {{/addComments}}
-    onConfigGeneration: async event => {
-        // We do not modify imported configurations
-        if (event.isImportedLibrary) return;
+    onConfigGeneration: async context => {
+        // Skip tags imported from libraries
+        if (context.isImportedLibrary) return;
 
 {{#useKeeper}}
-        if (event.config?.keep === 'both') return;
+        if (context.config?.keep === 'both') return;
 {{/useKeeper}}
         // TODO: Implement your custom config generation logic here
-        // event.save({
+        // context.save({
         //     namespace: 'your-namespace',
         //     path: 'your.path'
         // });
 {{#useKeeper}}
-    await keeper(event);
+    await keeper(context);
 {{/useKeeper}}
     },
 {{/useCustom}}
@@ -150,23 +154,23 @@ const config = {
 {{#interfereWithCollection}}
 {{#addComments}}
         /**
-         * Called for each duplicate key conflict (same namespace + path, different values).
-         * To stop on first conflict, call event.exit() here instead of in onCollectFinish.
+         * Called by the CLI for each duplicate-key conflict (same namespace + path, different values).
+         * To stop on the first conflict, call context.exit() here instead of in onCollectFinish.
          */
 {{/addComments}}
-        onConflictResolution: async event => {
-            await event.logger.conflict(event.conflict, true);
+        onConflictResolution: async context => {
+            await context.logger.conflict(context.conflict, true);
             // By default, continue processing even if conflicts occur
-            // Call event.exit(); to terminate the process upon the first conflict
+            // Call context.exit(); to abort on the first conflict
         },
 {{#addComments}}
         /**
-         * Called after collection completes. Check event.conflicts array to handle all conflicts.
+         * Called by the CLI after collection completes. Inspect context.conflicts to decide whether to abort.
          * Remove this hook to allow merging despite conflicts.
          */
 {{/addComments}}
-        onCollectFinish: event => {
-            if (event.conflicts.length) event.exit(); // Stop the process to avoid merging on conflict
+        onCollectFinish: context => {
+            if (context.conflicts.length) context.exit(); // Abort so conflicts are not silently merged
         }
 {{/interfereWithCollection}}
     },

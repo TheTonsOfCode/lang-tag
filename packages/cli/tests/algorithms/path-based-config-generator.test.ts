@@ -1,20 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { pathBasedConfigGenerator } from '@/algorithms';
-import { LangTagCLIConfigGenerationEvent } from '@/type';
+import { LangTagCLIConfigGenerationContext } from '@/type';
 
 const TRIGGER_NAME = 'path-based-config-generator';
 
-// Helper function to create a mock event
-function createMockEvent(
+// Helper function to create a mock context
+function createMockContext(
     relativePath: string,
     includes: string[] = ['src/**/*.{js,ts,jsx,tsx}'],
     collectDefaultNamespace: string = 'common'
-): LangTagCLIConfigGenerationEvent {
+): LangTagCLIConfigGenerationContext {
     let savedConfig: any = null;
     const config: any = undefined;
 
-    const event = {
+    const context = {
         absolutePath: `/project/${relativePath}`,
         relativePath,
         isImportedLibrary: false,
@@ -48,14 +48,14 @@ function createMockEvent(
             if (savedConfig !== undefined && savedConfig !== null) {
                 return { ...savedConfig };
             }
-            if (event.config) {
-                return { ...event.config };
+            if (context.config) {
+                return { ...context.config };
             }
             return {};
         },
     } as any;
 
-    return event;
+    return context;
 }
 
 describe('pathBasedConfigGenerator', () => {
@@ -65,10 +65,10 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent('src/features/auth/Login.tsx');
-            await generator(event);
+            const context = createMockContext('src/features/auth/Login.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'features',
                     path: 'auth',
@@ -83,10 +83,10 @@ describe('pathBasedConfigGenerator', () => {
                 includeFileName: true,
             });
 
-            const event = createMockEvent('src/components/Button.tsx');
-            await generator(event);
+            const context = createMockContext('src/components/Button.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'components',
                     path: 'Button',
@@ -101,10 +101,10 @@ describe('pathBasedConfigGenerator', () => {
                 fallbackNamespace: 'common',
             });
 
-            const event = createMockEvent('src/Component.tsx');
-            await generator(event);
+            const context = createMockContext('src/Component.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(null, TRIGGER_NAME);
+            expect(context.save).toHaveBeenCalledWith(null, TRIGGER_NAME);
         });
 
         it('should handle deep nested paths', async () => {
@@ -112,12 +112,12 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/features/admin/users/list/components/UserRow.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'features',
                     path: 'admin.users.list.components',
@@ -133,12 +133,12 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreIncludesRootDirectories: true,
             });
 
-            const event = createMockEvent('src/features/auth/Login.tsx', [
+            const context = createMockContext('src/features/auth/Login.tsx', [
                 'src/**/*.{js,ts,jsx,tsx}',
             ]);
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'features',
                     path: 'auth',
@@ -152,7 +152,7 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreIncludesRootDirectories: true,
             });
 
-            const event1 = createMockEvent('src/features/auth/Login.tsx', [
+            const event1 = createMockContext('src/features/auth/Login.tsx', [
                 '(src|app)/**/*.{js,ts,jsx,tsx}',
             ]);
             await generator(event1);
@@ -165,7 +165,7 @@ describe('pathBasedConfigGenerator', () => {
                 TRIGGER_NAME
             );
 
-            const event2 = createMockEvent('app/admin/users/List.tsx', [
+            const event2 = createMockContext('app/admin/users/List.tsx', [
                 '(src|app)/**/*.{js,ts,jsx,tsx}',
             ]);
             await generator(event2);
@@ -184,7 +184,7 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreIncludesRootDirectories: true,
             });
 
-            const event1 = createMockEvent('frontend/pages/Home.tsx', [
+            const event1 = createMockContext('frontend/pages/Home.tsx', [
                 '[frontend|backend]/**/*.tsx',
             ]);
             await generator(event1);
@@ -196,7 +196,7 @@ describe('pathBasedConfigGenerator', () => {
                 TRIGGER_NAME
             );
 
-            const event2 = createMockEvent('backend/api/users.ts', [
+            const event2 = createMockContext('backend/api/users.ts', [
                 '[frontend|backend]/**/*.ts',
             ]);
             await generator(event2);
@@ -214,7 +214,7 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreIncludesRootDirectories: true,
             });
 
-            const event1 = createMockEvent('src/features/auth/Login.tsx', [
+            const event1 = createMockContext('src/features/auth/Login.tsx', [
                 '(src|app)/**/*.{js,ts,jsx,tsx}',
                 'components/**/*.{jsx,tsx}',
             ]);
@@ -228,7 +228,7 @@ describe('pathBasedConfigGenerator', () => {
                 TRIGGER_NAME
             );
 
-            const event2 = createMockEvent('components/ui/Button.tsx', [
+            const event2 = createMockContext('components/ui/Button.tsx', [
                 '(src|app)/**/*.{js,ts,jsx,tsx}',
                 'components/**/*.{jsx,tsx}',
             ]);
@@ -248,13 +248,13 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['features'],
             });
 
-            const event = createMockEvent('src/features/auth/Login.tsx', [
+            const context = createMockContext('src/features/auth/Login.tsx', [
                 'src/**/*.{js,ts,jsx,tsx}',
             ]);
-            await generator(event);
+            await generator(context);
 
             // Both 'src' and 'features' should be ignored
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'auth',
                 },
@@ -268,12 +268,12 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent('src/features/auth/Login.tsx', [
+            const context = createMockContext('src/features/auth/Login.tsx', [
                 'src/**/*.{js,ts,jsx,tsx}',
             ]);
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'features',
                     path: 'auth',
@@ -287,12 +287,12 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreIncludesRootDirectories: true,
             });
 
-            const event = createMockEvent('src/components/Button.tsx', [
+            const context = createMockContext('src/components/Button.tsx', [
                 './src/**/*.tsx',
             ]);
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'components',
                 },
@@ -305,13 +305,13 @@ describe('pathBasedConfigGenerator', () => {
                 // ignoreIncludesRootDirectories not set (defaults to false)
             });
 
-            const event = createMockEvent('src/features/auth/Login.tsx', [
+            const context = createMockContext('src/features/auth/Login.tsx', [
                 'src/**/*.{js,ts,jsx,tsx}',
             ]);
-            await generator(event);
+            await generator(context);
 
             // 'src' should NOT be ignored
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'src',
                     path: 'features.auth',
@@ -328,10 +328,10 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent('src/components/Button.tsx');
-            await generator(event);
+            const context = createMockContext('src/components/Button.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'components',
                     path: 'Button',
@@ -345,10 +345,10 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent('src/components/Button.tsx');
-            await generator(event);
+            const context = createMockContext('src/components/Button.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'components',
                 },
@@ -362,10 +362,10 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src', 'pages'],
             });
 
-            const event = createMockEvent('src/pages/UserProfile.tsx');
-            await generator(event);
+            const context = createMockContext('src/pages/UserProfile.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'UserProfile',
                 },
@@ -380,10 +380,10 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['app'],
             });
 
-            const event = createMockEvent('app/(admin)/users/List.tsx');
-            await generator(event);
+            const context = createMockContext('app/(admin)/users/List.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'users',
                 },
@@ -396,10 +396,10 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['app'],
             });
 
-            const event = createMockEvent('app/[locale]/about/page.tsx');
-            await generator(event);
+            const context = createMockContext('app/[locale]/about/page.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'about',
                 },
@@ -413,10 +413,10 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['app'],
             });
 
-            const event = createMockEvent('app/(admin)/users/List.tsx');
-            await generator(event);
+            const context = createMockContext('app/(admin)/users/List.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'admin',
                     path: 'users',
@@ -436,10 +436,10 @@ describe('pathBasedConfigGenerator', () => {
                 },
             });
 
-            const event = createMockEvent('src/app/components/Button.tsx');
-            await generator(event);
+            const context = createMockContext('src/app/components/Button.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'src',
                     path: 'components',
@@ -457,7 +457,7 @@ describe('pathBasedConfigGenerator', () => {
                 },
             });
 
-            const event1 = createMockEvent('src/features/auth/Login.tsx');
+            const event1 = createMockContext('src/features/auth/Login.tsx');
             await generator(event1);
 
             expect(event1.save).toHaveBeenCalledWith(
@@ -468,7 +468,7 @@ describe('pathBasedConfigGenerator', () => {
                 TRIGGER_NAME
             );
 
-            const event2 = createMockEvent('src/features/orders/List.tsx');
+            const event2 = createMockContext('src/features/orders/List.tsx');
             await generator(event2);
 
             expect(event2.save).toHaveBeenCalledWith(
@@ -491,10 +491,10 @@ describe('pathBasedConfigGenerator', () => {
                 },
             });
 
-            const event = createMockEvent('src/app/routes/admin/users.tsx');
-            await generator(event);
+            const context = createMockContext('src/app/routes/admin/users.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'src',
                     path: 'app.admin',
@@ -515,13 +515,13 @@ describe('pathBasedConfigGenerator', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'app/dashboard/modules/advanced/facility/page.tsx'
             );
-            await generator(event);
+            await generator(context);
 
             // dashboard ignored by _, modules ignored by true
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'advanced.facility',
@@ -544,7 +544,7 @@ describe('pathBasedConfigGenerator', () => {
             });
 
             // Test 1: features and auth ignored
-            const event1 = createMockEvent('src/features/auth/login.tsx');
+            const event1 = createMockContext('src/features/auth/login.tsx');
             await generator(event1);
             expect(event1.save).toHaveBeenCalledWith(
                 {
@@ -554,7 +554,9 @@ describe('pathBasedConfigGenerator', () => {
             );
 
             // Test 2: features ignored, admin and users ignored
-            const event2 = createMockEvent('src/features/admin/users/list.tsx');
+            const event2 = createMockContext(
+                'src/features/admin/users/list.tsx'
+            );
             await generator(event2);
             expect(event2.save).toHaveBeenCalledWith(
                 {
@@ -565,7 +567,7 @@ describe('pathBasedConfigGenerator', () => {
             );
 
             // Test 3: features ignored, admin kept, orders kept
-            const event3 = createMockEvent(
+            const event3 = createMockContext(
                 'src/features/admin/orders/list.tsx'
             );
             await generator(event3);
@@ -591,14 +593,14 @@ describe('pathBasedConfigGenerator', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'app/dashboard/modules/advanced/facility/page.tsx',
                 ['app/**/*.tsx']
             );
-            await generator(event);
+            await generator(context);
 
             // app removed by ignoreIncludesRootDirectories, dashboard and modules ignored
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'advanced',
                     path: 'facility',
@@ -615,10 +617,10 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent('src/UserProfile/EditForm.tsx');
-            await generator(event);
+            const context = createMockContext('src/UserProfile/EditForm.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'userprofile',
                 },
@@ -632,10 +634,10 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent('src/UserProfile/EditForm.tsx');
-            await generator(event);
+            const context = createMockContext('src/UserProfile/EditForm.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'user-profile',
                 },
@@ -649,12 +651,12 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/features/EditUserForm/components.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'features',
                     path: 'editUserForm',
@@ -670,12 +672,12 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/UserProfile/EditForm/Components.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'user_profile',
                     path: 'edit-form',
@@ -693,15 +695,15 @@ describe('pathBasedConfigGenerator', () => {
                 clearOnDefaultNamespace: false,
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/components/Button.tsx',
                 ['src/**/*.tsx'],
                 'common'
             );
-            await generator(event);
+            await generator(context);
 
             // Should use 'ui' as namespace (fallback is different from default 'common')
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'ui',
                 },
@@ -714,15 +716,15 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/Button.tsx',
                 ['src/**/*.tsx'],
                 'common'
             );
-            await generator(event);
+            await generator(context);
 
             // clearOnDefaultNamespace is true by default, so should clear
-            expect(event.save).toHaveBeenCalledWith(null, TRIGGER_NAME);
+            expect(context.save).toHaveBeenCalledWith(null, TRIGGER_NAME);
         });
     });
 
@@ -733,14 +735,14 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/common/Button.tsx',
                 ['src/**/*.tsx'],
                 'common'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(null, TRIGGER_NAME);
+            expect(context.save).toHaveBeenCalledWith(null, TRIGGER_NAME);
         });
 
         it('should keep namespace even if equals default when disabled', async () => {
@@ -749,14 +751,14 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/common/Button.tsx',
                 ['src/**/*.tsx'],
                 'common'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'common',
                 },
@@ -770,14 +772,14 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/common/auth/Login.tsx',
                 ['src/**/*.tsx'],
                 'common'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     path: 'auth',
                 },
@@ -803,16 +805,16 @@ describe('pathBasedConfigGenerator', () => {
                 clearOnDefaultNamespace: true,
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/features/admin/temp/users/UserProfile.tsx',
                 ['src/**/*.tsx'],
                 'common'
             );
-            await generator(event);
+            await generator(context);
 
             // src ignored (from includes), features ignored (manual), temp ignored (structured), admin ignored (structured parent)
             // Result: admin -> users -> UserProfile
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'admin',
                     path: 'users.user-profile',
@@ -826,19 +828,19 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src', 'components', 'ui'],
             });
 
-            const event = createMockEvent('src/components/ui/Button.tsx');
-            await generator(event);
+            const context = createMockContext('src/components/ui/Button.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(null, TRIGGER_NAME);
+            expect(context.save).toHaveBeenCalledWith(null, TRIGGER_NAME);
         });
 
         it('should handle single segment paths', async () => {
             const generator = pathBasedConfigGenerator({});
 
-            const event = createMockEvent('Component.tsx');
-            await generator(event);
+            const context = createMockContext('Component.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(null, TRIGGER_NAME);
+            expect(context.save).toHaveBeenCalledWith(null, TRIGGER_NAME);
         });
 
         it('should work with monorepo-style paths', async () => {
@@ -847,13 +849,13 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'packages/ui/src/components/Button.tsx',
                 ['packages/**/*.tsx']
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'ui',
                     path: 'components',
@@ -869,13 +871,13 @@ describe('pathBasedConfigGenerator', () => {
                 lowercaseNamespace: true,
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'app/(admin)/dashboard/users/page.tsx',
                 ['app/**/*.tsx']
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'dashboard',
                     path: 'users',
@@ -891,12 +893,12 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/my-feature/sub_directory/Component.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'my-feature',
                     path: 'sub_directory',
@@ -910,10 +912,10 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreIncludesRootDirectories: true,
             });
 
-            const event = createMockEvent('src/components/Button.tsx', []);
-            await generator(event);
+            const context = createMockContext('src/components/Button.tsx', []);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'src',
                     path: 'components',
@@ -927,12 +929,12 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreIncludesRootDirectories: true,
             });
 
-            const event = createMockEvent('src/components/Button.tsx', [
+            const context = createMockContext('src/components/Button.tsx', [
                 'src/*.tsx',
             ]);
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'components',
                 },
@@ -945,13 +947,13 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreIncludesRootDirectories: true,
             });
 
-            const event = createMockEvent('frontend/pages/Home.tsx', [
+            const context = createMockContext('frontend/pages/Home.tsx', [
                 '(frontend|backend)/(pages|api)/**/*.tsx',
             ]);
-            await generator(event);
+            await generator(context);
 
             // Should only extract first segment root directories
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'pages',
                 },
@@ -966,9 +968,9 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent('src/features/auth/Login.tsx');
+            const context = createMockContext('src/features/auth/Login.tsx');
             // Add custom properties to the config
-            (event as any).config = {
+            (context as any).config = {
                 namespace: 'old-namespace',
                 path: 'old.path',
                 debugMode: true,
@@ -976,10 +978,10 @@ describe('pathBasedConfigGenerator', () => {
                 customFlag: 'test-value',
             };
 
-            await generator(event);
+            await generator(context);
 
             // Should preserve custom properties while updating namespace and path
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'features',
                     path: 'auth',
@@ -996,15 +998,15 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent('src/components/Button.tsx');
-            (event as any).config = {
+            const context = createMockContext('src/components/Button.tsx');
+            (context as any).config = {
                 manual: true,
                 extra: { nested: { data: 'value' } },
             };
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'components',
                     manual: true,
@@ -1020,22 +1022,22 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/common/auth/Login.tsx',
                 ['src/**/*.tsx'],
                 'common'
             );
-            (event as any).config = {
+            (context as any).config = {
                 namespace: 'common',
                 path: 'old.path',
                 debugMode: true,
                 customProperty: 'should-be-preserved',
             };
 
-            await generator(event);
+            await generator(context);
 
             // namespace should be omitted because it equals default, but path and custom properties should remain
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     path: 'auth',
                     debugMode: true,
@@ -1050,13 +1052,13 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent('src/features/auth/Login.tsx');
+            const context = createMockContext('src/features/auth/Login.tsx');
             // config is undefined
 
-            await generator(event);
+            await generator(context);
 
             // Should generate only namespace and path
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'features',
                     path: 'auth',
@@ -1072,10 +1074,10 @@ describe('pathBasedConfigGenerator', () => {
                 ignoreDirectories: ['src'],
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/UserProfile/EditForm/Components.tsx'
             );
-            (event as any).config = {
+            (context as any).config = {
                 debugMode: true,
                 customSettings: {
                     featureFlag: 'enabled',
@@ -1083,9 +1085,9 @@ describe('pathBasedConfigGenerator', () => {
                 },
             };
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'user-profile',
                     path: 'edit_form',
@@ -1106,19 +1108,19 @@ describe('pathBasedConfigGenerator', () => {
                 clearOnDefaultNamespace: false,
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/Button.tsx',
                 ['src/**/*.tsx'],
                 'common'
             );
-            (event as any).config = {
+            (context as any).config = {
                 manual: true,
                 externalRef: 'some-ref',
             };
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'ui',
                     manual: true,
@@ -1149,15 +1151,15 @@ describe('pathBasedConfigGenerator', () => {
             };
 
             const generator = pathBasedConfigGenerator(generatorConfig);
-            const event = createMockEvent(
+            const context = createMockContext(
                 'app/dashboard/modules/advanced/facility/[id]/edit/page.tsx',
                 ['app/**/*.{js,ts,jsx,tsx}'],
                 'common'
             );
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'advanced',
                     path: 'facility.edit',
@@ -1185,22 +1187,22 @@ describe('pathBasedConfigGenerator', () => {
                 'app/**/*.{js,ts,jsx,tsx}',
                 'components/**/*.{js,ts,jsx,tsx}',
             ];
-            const event = createMockEvent(
+            const context = createMockContext(
                 'components/dashboard/views/facilities/facilities.translations.ts',
                 includes,
                 'common'
             );
 
             // Set existing config
-            (event as any).config = {
+            (context as any).config = {
                 namespace: 'facilities',
                 path: 'views.facilities',
             };
 
-            await generator(event);
+            await generator(context);
 
             // Should preserve namespace and remove path
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'facilities',
                 },
@@ -1230,7 +1232,7 @@ describe('pathBasedConfigGenerator', () => {
             // Test case 1:
             // components/dashboard/views/facilities/facilities.translations.ts
             const generator1 = pathBasedConfigGenerator(generatorConfig);
-            const event1 = createMockEvent(
+            const event1 = createMockContext(
                 'components/dashboard/views/facilities/facilities.translations.ts',
                 includes,
                 'common'
@@ -1248,7 +1250,7 @@ describe('pathBasedConfigGenerator', () => {
                 ...generatorConfig,
                 includeFileName: true,
             });
-            const event2 = createMockEvent(
+            const event2 = createMockContext(
                 'components/dashboard/views/facilities/facilities.translations.ts',
                 includes,
                 'common'
@@ -1268,7 +1270,7 @@ describe('pathBasedConfigGenerator', () => {
             // ignoreDirectories removes 'dashboard' and 'views'
             // Result: facilities only
             const generator3 = pathBasedConfigGenerator(generatorConfig);
-            const event3 = createMockEvent(
+            const event3 = createMockContext(
                 'app/dashboard/components/views/facilities/list.tsx',
                 includes,
                 'common'
@@ -1288,7 +1290,7 @@ describe('pathBasedConfigGenerator', () => {
             // ignoreDirectories removes 'dashboard' and 'views'
             // Result: UserManagement -> namespaceCase: 'kebab' -> 'user-management'
             const generator4 = pathBasedConfigGenerator(generatorConfig);
-            const event4 = createMockEvent(
+            const event4 = createMockContext(
                 'components/dashboard/views/UserManagement/EditUserForm.tsx',
                 includes,
                 'common'
@@ -1303,7 +1305,7 @@ describe('pathBasedConfigGenerator', () => {
 
             // Test case 5: Multiple segments with case transformations
             const generator5 = pathBasedConfigGenerator(generatorConfig);
-            const event5 = createMockEvent(
+            const event5 = createMockContext(
                 'components/dashboard/views/facilities/ReportGeneration/GenerateMonthlyReport.tsx',
                 includes,
                 'common'

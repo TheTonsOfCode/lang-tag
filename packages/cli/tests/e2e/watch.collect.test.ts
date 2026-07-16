@@ -47,9 +47,9 @@ const config = {
     excludes: ['node_modules', 'dist', 'build', '**/*.test.ts'],
     localesDirectory: 'public/locales',
     baseLanguageCode: 'en',
-    onConfigGeneration: async (event) => {
-        if (event.config) {
-            event.save(event.config);
+    onConfigGeneration: async (context) => {
+        if (context.config) {
+            context.save(context.config);
         }
     }
 };

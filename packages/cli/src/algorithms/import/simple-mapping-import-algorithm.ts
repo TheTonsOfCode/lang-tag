@@ -1,4 +1,4 @@
-import { LangTagCLIImportEvent } from '@/type';
+import { LangTagCLIImportContext } from '@/type';
 
 /**
  * Mapping for a specific file within a package.
@@ -130,7 +130,7 @@ export interface SimpleMappingImportAlgorithmOptions {
  */
 export function simpleMappingImportAlgorithm(
     options: SimpleMappingImportAlgorithmOptions
-): (event: LangTagCLIImportEvent) => void {
+): (context: LangTagCLIImportContext) => void {
     const { mappings, configRemap } = options;
 
     const packageMap = new Map<string, PackageMapping>();
@@ -145,8 +145,8 @@ export function simpleMappingImportAlgorithm(
         fileMap.set(mapping.packageName, files);
     }
 
-    return (event: LangTagCLIImportEvent) => {
-        const { exports, importManager, logger } = event;
+    return (context: LangTagCLIImportContext) => {
+        const { exports, importManager, logger } = context;
 
         for (const { packageJSON, exportData } of exports) {
             const packageName = packageJSON.name || 'unknown-package';

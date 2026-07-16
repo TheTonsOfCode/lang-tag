@@ -1,7 +1,7 @@
 import micromatch from 'micromatch';
 import { join } from 'pathe';
 
-import { LangTagCLIImportEvent } from '@/type';
+import { LangTagCLIImportContext } from '@/type';
 
 import { CaseType, applyCaseTransform } from '../case-utils';
 
@@ -277,7 +277,7 @@ export interface FlexibleImportAlgorithmOptions {
  */
 export function flexibleImportAlgorithm(
     options: FlexibleImportAlgorithmOptions = {}
-): (event: LangTagCLIImportEvent) => void {
+): (context: LangTagCLIImportContext) => void {
     const {
         variableName = {},
         filePath = {},
@@ -293,8 +293,8 @@ export function flexibleImportAlgorithm(
         namespaces: excludeNamespaces = [],
     } = exclude;
 
-    return (event: LangTagCLIImportEvent) => {
-        const { exports, importManager, logger } = event;
+    return (context: LangTagCLIImportContext) => {
+        const { exports, importManager, logger } = context;
 
         for (const { packageJSON, exportData } of exports) {
             const packageName = packageJSON.name || 'unknown-package';

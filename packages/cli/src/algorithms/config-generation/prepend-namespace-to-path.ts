@@ -1,4 +1,4 @@
-import { LangTagCLIConfigGenerationEvent } from '@/type';
+import { LangTagCLIConfigGenerationContext } from '@/type';
 
 const TRIGGER_NAME = 'prepend-namespace-to-path';
 
@@ -26,17 +26,17 @@ export interface PrependNamespaceToPathOptions {}
  * ```
  *
  * @param options Configuration options for the algorithm
- * @returns A function compatible with LangTagCLIConfigGenerationEvent
+ * @returns A function compatible with LangTagCLIConfig.onConfigGeneration
  */
 export function prependNamespaceToPath(
     options: PrependNamespaceToPathOptions = {}
-): (event: LangTagCLIConfigGenerationEvent) => Promise<void> {
-    return async (event: LangTagCLIConfigGenerationEvent) => {
-        const currentConfig = event.savedConfig;
+): (context: LangTagCLIConfigGenerationContext) => Promise<void> {
+    return async (context: LangTagCLIConfigGenerationContext) => {
+        const currentConfig = context.savedConfig;
         const { namespace, path } = currentConfig || {};
 
         const actualNamespace =
-            namespace || event.langTagConfig.collect?.defaultNamespace;
+            namespace || context.langTagConfig.collect?.defaultNamespace;
 
         if (!actualNamespace) {
             return;
@@ -50,7 +50,7 @@ export function prependNamespaceToPath(
             newPath = actualNamespace;
         }
 
-        event.save(
+        context.save(
             {
                 ...(currentConfig || {}),
                 path: newPath,

@@ -1,4 +1,4 @@
-import { LangTagCLIConfigGenerationEvent } from '@/type';
+import { LangTagCLIConfigGenerationContext } from '@/type';
 
 const TRIGGER_NAME = 'config-keeper';
 
@@ -43,12 +43,12 @@ export interface ConfigKeeperOptions {
  * const pathAlgorithm = pathBasedConfigGenerator({ ... });
  * const keeper = configKeeper();
  *
- * onConfigGeneration: async (event) => {
+ * onConfigGeneration: async (context) => {
  *   // First, apply path-based generation
- *   await pathAlgorithm(event);
+ *   await pathAlgorithm(context);
  *
  *   // Then, restore any values marked to be kept
- *   await keeper(event);
+ *   await keeper(context);
  * }
  * ```
  *
@@ -66,23 +66,23 @@ export interface ConfigKeeperOptions {
  */
 export function configKeeper(
     options: ConfigKeeperOptions = {}
-): (event: LangTagCLIConfigGenerationEvent) => Promise<void> {
+): (context: LangTagCLIConfigGenerationContext) => Promise<void> {
     const propertyName = options.propertyName ?? 'keep';
     const keepPropertyAtEnd = options.keepPropertyAtEnd ?? true;
 
-    return async (event: LangTagCLIConfigGenerationEvent) => {
+    return async (context: LangTagCLIConfigGenerationContext) => {
         // Only proceed if save() was called by a previous algorithm
-        if (!event.isSaved) {
+        if (!context.isSaved) {
             return;
         }
 
         // Only proceed if we have an original config
-        if (!event.config) {
+        if (!context.config) {
             return;
         }
 
         // Check if the original config has the keep property
-        const keepMode = (event.config as any)[propertyName] as
+        const keepMode = (context.config as any)[propertyName] as
             | ConfigKeeperMode
             | undefined;
 
@@ -100,9 +100,9 @@ export function configKeeper(
         }
 
         // Get the saved config - if null, start from old config without namespace and path
-        let restoredConfig = event.getCurrentConfig();
+        let restoredConfig = context.getCurrentConfig();
 
-        if (event.savedConfig === null) {
+        if (context.savedConfig === null) {
             // Algorithm wanted to remove config, so start from original but without namespace/path
             delete restoredConfig.namespace;
             delete restoredConfig.path;
@@ -113,17 +113,17 @@ export function configKeeper(
 
         // Helper function to check and restore a property if needed
         const restorePropertyIfNeeded = (propertyKey: 'namespace' | 'path') => {
-            if (!event.config) return;
+            if (!context.config) return;
 
             const shouldRestore =
                 (keepMode === propertyKey || keepMode === 'both') &&
-                event.config[propertyKey] !== undefined;
+                context.config[propertyKey] !== undefined;
 
             if (
                 shouldRestore &&
-                restoredConfig[propertyKey] !== event.config[propertyKey]
+                restoredConfig[propertyKey] !== context.config[propertyKey]
             ) {
-                restoredConfig[propertyKey] = event.config[propertyKey];
+                restoredConfig[propertyKey] = context.config[propertyKey];
                 needsSave = true;
             }
         };
@@ -134,15 +134,15 @@ export function configKeeper(
 
         // Check if 'keep' property didn't exist before - we need to save to add it
         const keepPropertyExistedBefore =
-            event.savedConfig &&
-            (event.savedConfig as any)[propertyName] !== undefined;
+            context.savedConfig &&
+            (context.savedConfig as any)[propertyName] !== undefined;
         if (!keepPropertyExistedBefore) {
             needsSave = true;
         }
 
         // Check if keep property needs to be moved to the end
-        if (keepPropertyAtEnd && event.savedConfig && !needsSave) {
-            const savedKeys = Object.keys(event.savedConfig);
+        if (keepPropertyAtEnd && context.savedConfig && !needsSave) {
+            const savedKeys = Object.keys(context.savedConfig);
             const keepIndex = savedKeys.indexOf(propertyName);
             const isKeepAtEnd = keepIndex === savedKeys.length - 1;
 
@@ -169,6 +169,6 @@ export function configKeeper(
         finalConfig[propertyName] = keepMode;
 
         // Save the restored config
-        event.save(finalConfig, TRIGGER_NAME);
+        context.save(finalConfig, TRIGGER_NAME);
     };
 }

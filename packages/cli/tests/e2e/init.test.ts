@@ -63,7 +63,9 @@ describe('init command e2e tests', () => {
         );
         expect(configContent).toContain("localesDirectory: 'public/locales'");
         expect(configContent).toContain("baseLanguageCode: 'en'");
-        expect(configContent).toContain('onConfigGeneration: async event => {');
+        expect(configContent).toContain(
+            'onConfigGeneration: async context => {'
+        );
     });
 
     it('should not overwrite existing configuration file', () => {
@@ -74,9 +76,9 @@ const config = {
     excludes: ['node_modules'],
     localesDirectory: 'custom/locales',
     baseLanguageCode: 'en',
-    onConfigGeneration: async (event) => {
-        if (event.config) {
-            event.save(event.config);
+    onConfigGeneration: async (context) => {
+        if (context.config) {
+            context.save(context.config);
         }
     }
 };

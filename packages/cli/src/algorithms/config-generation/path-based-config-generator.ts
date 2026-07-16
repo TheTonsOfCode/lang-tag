@@ -1,6 +1,6 @@
 import { sep } from 'pathe';
 
-import { LangTagCLIConfigGenerationEvent } from '@/type';
+import { LangTagCLIConfigGenerationContext } from '@/type';
 
 import { CaseType, applyCaseTransform } from '../case-utils';
 
@@ -186,7 +186,7 @@ export interface PathBasedConfigGeneratorOptions {
  */
 export function pathBasedConfigGenerator(
     options: PathBasedConfigGeneratorOptions = {}
-): (event: LangTagCLIConfigGenerationEvent) => Promise<void> {
+): (context: LangTagCLIConfigGenerationContext) => Promise<void> {
     const {
         includeFileName = false,
         removeBracketedDirectories = true,
@@ -212,8 +212,8 @@ export function pathBasedConfigGenerator(
         );
     }
 
-    return async (event: LangTagCLIConfigGenerationEvent) => {
-        const { relativePath, langTagConfig } = event;
+    return async (context: LangTagCLIConfigGenerationContext) => {
+        const { relativePath, langTagConfig } = context;
 
         // Determine the actual fallback namespace from options or config default
         const actualFallbackNamespace =
@@ -320,7 +320,7 @@ export function pathBasedConfigGenerator(
         }
 
         // Build the configuration object, preserving existing properties
-        const newConfig: any = event.getCurrentConfig();
+        const newConfig: any = context.getCurrentConfig();
 
         // Handle default namespace clearing
         if (clearOnDefaultNamespace && namespace === actualFallbackNamespace) {
@@ -332,14 +332,14 @@ export function pathBasedConfigGenerator(
             } else {
                 // No namespace, no path - check if there are any other custom properties
                 const hasOtherProperties =
-                    event.config &&
-                    Object.keys(event.config).some(
+                    context.config &&
+                    Object.keys(context.config).some(
                         (key) => key !== 'namespace' && key !== 'path'
                     );
 
                 if (!hasOtherProperties) {
                     // No other properties - clear entire config
-                    event.save(null, TRIGGER_NAME);
+                    context.save(null, TRIGGER_NAME);
                     return;
                 } else {
                     // Preserve other properties but remove namespace and path
@@ -361,7 +361,7 @@ export function pathBasedConfigGenerator(
 
         // Save configuration if we have any fields
         if (Object.keys(newConfig).length > 0) {
-            event.save(newConfig, TRIGGER_NAME);
+            context.save(newConfig, TRIGGER_NAME);
         }
     };
 }

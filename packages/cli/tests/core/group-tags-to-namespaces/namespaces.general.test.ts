@@ -646,8 +646,8 @@ describe('$LT_GroupTagsToNamespaces', () => {
     it('should stop processing when onConflictResolution calls exit()', async () => {
         const onConflictResolution = vi
             .fn()
-            .mockImplementation(async (event) => {
-                event.exit();
+            .mockImplementation(async (context) => {
+                context.exit();
             });
         const configWithHandler = {
             ...mockConfig,
@@ -690,8 +690,8 @@ describe('$LT_GroupTagsToNamespaces', () => {
     });
 
     it('should stop processing when onCollectFinish calls exit()', async () => {
-        const onCollectFinish = vi.fn().mockImplementation((event) => {
-            event.exit();
+        const onCollectFinish = vi.fn().mockImplementation((context) => {
+            context.exit();
         });
         const configWithHandler = {
             ...mockConfig,

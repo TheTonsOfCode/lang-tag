@@ -5,10 +5,10 @@ import { $LT_CMD_Collect } from '@/commands/cmd-collect';
 import { $LT_TagCandidateFile } from '@/core/collect/collect-tags';
 import { LangTagCLILogger } from '@/logger';
 import {
-    LangTagCLICollectConfigFixEvent,
-    LangTagCLICollectFinishEvent,
+    LangTagCLICollectConfigFixContext,
+    LangTagCLICollectFinishContext,
     LangTagCLIConfig,
-    LangTagCLIConflictResolutionEvent,
+    LangTagCLIConflictResolutionContext,
     LangTagCLIProcessedTag,
 } from '@/type';
 
@@ -109,14 +109,14 @@ const setupConfig = (
             defaultNamespace: 'common',
             ignoreConflictsWithMatchingValues: true,
             collector,
-            onCollectConfigFix: (event: LangTagCLICollectConfigFixEvent) =>
-                event.config,
+            onCollectConfigFix: (context: LangTagCLICollectConfigFixContext) =>
+                context.config,
             onConflictResolution: async (
-                event: LangTagCLIConflictResolutionEvent
+                context: LangTagCLIConflictResolutionContext
             ) => {
-                detectedConflicts.push(event.conflict);
+                detectedConflicts.push(context.conflict);
             },
-            onCollectFinish: (event: LangTagCLICollectFinishEvent) => {
+            onCollectFinish: (context: LangTagCLICollectFinishContext) => {
                 // Store conflicts for assertions
             },
         },

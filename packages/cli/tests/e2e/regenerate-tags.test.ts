@@ -121,8 +121,8 @@ describe('regenerate-tags command e2e tests', () => {
         };
     }`;
 
-    const testConfigGenerationFunction = `async (event) => {
-        const { relativePath, isImportedLibrary, config } = event;
+    const testConfigGenerationFunction = `async (context) => {
+        const { relativePath, isImportedLibrary, config } = context;
         
         // Don't modify imported library configurations
         if (isImportedLibrary) return;
@@ -142,7 +142,7 @@ describe('regenerate-tags command e2e tests', () => {
         const parts = withoutSrc.split('/');
         
         if (parts.length === 1) {
-            event.save({
+            context.save({
                 ...config,
                 namespace: 'too-short-path',
                 path: ''
@@ -155,7 +155,7 @@ describe('regenerate-tags command e2e tests', () => {
         const pathParts = parts.slice(1, -1);
         const newPath = pathParts.join('.');
         
-        event.save({
+        context.save({
             ...config,
             namespace,
             path: newPath

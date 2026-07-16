@@ -84,52 +84,49 @@ export interface LangTagCLIConfig {
         ignoreConflictsWithMatchingValues?: boolean;
 
         /**
-         * A function called when the collected translation configuration needs to be fixed or validated.
-         * Allows modification of the configuration before it's saved to the output files.
+         * Called by the CLI while collecting translations, when a tag's configuration
+         * needs to be fixed or validated before writing locale files.
          */
         onCollectConfigFix?: (
-            event: LangTagCLICollectConfigFixEvent
+            context: LangTagCLICollectConfigFixContext
         ) => LangTagTranslationsConfig;
 
         /**
-         * A function called when a single conflict is detected between translation tags.
-         * Allows custom resolution logic for handling individual conflicts.
-         * Return true to continue processing, false to stop execution.
+         * Called by the CLI for each conflict between translation tags
+         * (same namespace + path, incompatible values).
          */
         onConflictResolution?: (
-            event: LangTagCLIConflictResolutionEvent
+            context: LangTagCLIConflictResolutionContext
         ) => Promise<void>;
 
         /**
-         * A function called after all conflicts have been collected and processed.
-         * Allows custom logic to decide whether to continue or stop based on all conflicts.
-         * Return true to continue processing, false to stop execution.
+         * Called by the CLI after collection finishes.
+         * Use `context.conflicts` / `context.exit()` to decide whether to abort.
          */
-        onCollectFinish?: (event: LangTagCLICollectFinishEvent) => void;
+        onCollectFinish?: (context: LangTagCLICollectFinishContext) => void;
     };
 
     /**
-     * A function called for each found lang tag before processing.
-     * Allows dynamic modification of the tag's configuration (namespace, path, etc.)
-     * based on the file path or other context.
+     * Called by the CLI for each lang tag during `regenerate-tags` (not at app runtime).
+     * Receives a per-tag context so you can derive `namespace` / `path` from the file
+     * location (or other rules) and write them back into the source file.
      *
-     * **IMPORTANT:** The `event.config` object is deeply frozen and immutable. Any attempt
-     * to directly modify it will throw an error. To update the configuration, you must
-     * use `event.save(newConfig)` with a new configuration object.
+     * **IMPORTANT:** `context.config` is deeply frozen and immutable. Any attempt
+     * to mutate it will throw. To update the configuration, call
+     * `context.save(newConfig)` with a new object.
      *
-     * Changes made inside this function are **applied only if you explicitly call**
-     * `event.save(configuration)`. Returning a value or modifying the event object
-     * without calling `save()` will **not** update the configuration.
+     * Changes apply **only** when you call `context.save(...)`. Returning a value
+     * or mutating the context without `save()` has no effect.
      *
      * @example
      * ```ts
-     * onConfigGeneration: async (event) => {
-     *   // ❌ This will throw an error:
-     *   // event.config.namespace = "new-namespace";
+     * onConfigGeneration: async (context) => {
+     *   // ❌ This will throw:
+     *   // context.config.namespace = "new-namespace";
      *
-     *   // ✅ Correct way to update:
-     *   event.save({
-     *     ...event.config,
+     *   // ✅ Correct:
+     *   context.save({
+     *     ...context.config,
      *     namespace: "new-namespace",
      *     path: "new.path"
      *   });
@@ -137,7 +134,7 @@ export interface LangTagCLIConfig {
      * ```
      */
     onConfigGeneration: (
-        event: LangTagCLIConfigGenerationEvent
+        context: LangTagCLIConfigGenerationContext
     ) => Promise<void>;
 
     import: {
@@ -154,13 +151,13 @@ export interface LangTagCLIConfig {
         tagImportPath: string;
 
         /**
-         * A function to customize the generated file name and export name for imported library tags.
-         * Allows controlling how imported tags are organized and named within the generated files.
+         * Called by the CLI when importing tags from external packages.
+         * Controls how imported tags are organized into generated files.
          */
-        onImport: (event: LangTagCLIImportEvent) => void;
+        onImport: (context: LangTagCLIImportContext) => void;
 
         /**
-         * A function called after all lang-tags were imported
+         * Called by the CLI after all lang-tags were imported.
          */
         onImportFinish?: () => void;
     };
@@ -284,10 +281,14 @@ export interface LangTagCLIExportDataTag {
 }
 
 /*
- * Events
+ * Hook contexts
+ *
+ * Each CLI hook receives a context object with the data and helpers for that step.
+ * These are not DOM / EventEmitter events — just typed callback payloads.
  */
 
-export interface LangTagCLIImportEvent {
+/** Context passed to `import.onImport`. */
+export interface LangTagCLIImportContext {
     exports: {
         packageJSON: any;
         exportData: LangTagCLIExportData;
@@ -299,7 +300,8 @@ export interface LangTagCLIImportEvent {
     importManager: LangTagCLIImportManager;
 }
 
-export interface LangTagCLIConfigGenerationEvent {
+/** Context passed to `onConfigGeneration` for a single tag. */
+export interface LangTagCLIConfigGenerationContext {
     /** The absolute path to the source file being processed. */
     readonly absolutePath: string;
 
@@ -322,7 +324,7 @@ export interface LangTagCLIConfigGenerationEvent {
     readonly langTagConfig: LangTagCLIConfig;
 
     /**
-     * Indicates whether the `save()` method has been called during this event.
+     * Whether `save()` has already been called for this tag during the current hook run.
      */
     readonly isSaved: boolean;
 
@@ -335,9 +337,9 @@ export interface LangTagCLIConfigGenerationEvent {
     readonly savedConfig: LangTagTranslationsConfig | null | undefined;
 
     /**
-     * Tells CLI to replace tag configuration
-     * null = means configuration will be removed
-     **/
+     * Asks the CLI to replace this tag's configuration in the source file.
+     * Pass `null` to remove the configuration argument.
+     */
     save(config: LangTagTranslationsConfig | null, triggerName?: string): void;
 
     /**
@@ -351,31 +353,34 @@ export interface LangTagCLIConfigGenerationEvent {
      *
      * @example
      * ```ts
-     * const currentConfig = event.getCurrentConfig();
+     * const currentConfig = context.getCurrentConfig();
      * currentConfig.namespace = 'new-namespace';
-     * event.save(currentConfig);
+     * context.save(currentConfig);
      * ```
      */
     getCurrentConfig(): LangTagTranslationsConfig;
 }
 
-export interface LangTagCLICollectConfigFixEvent {
+/** Context passed to `collect.onCollectConfigFix`. */
+export interface LangTagCLICollectConfigFixContext {
     config: LangTagTranslationsConfig;
     langTagConfig: LangTagCLIConfig;
 }
 
-export interface LangTagCLIConflictResolutionEvent {
+/** Context passed to `collect.onConflictResolution`. */
+export interface LangTagCLIConflictResolutionContext {
     conflict: LangTagCLIConflict;
     logger: LangTagCLILogger;
-    /** Breaks translation collection process */
+    /** Abort translation collection. */
     exit(): void;
 }
 
-export interface LangTagCLICollectFinishEvent {
+/** Context passed to `collect.onCollectFinish`. */
+export interface LangTagCLICollectFinishContext {
     totalTags: number;
     namespaces: Record<string, Record<string, any>>;
     conflicts: LangTagCLIConflict[];
     logger: LangTagCLILogger;
-    /** Breaks translation collection process */
+    /** Abort translation collection. */
     exit(): void;
 }

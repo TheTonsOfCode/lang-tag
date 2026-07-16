@@ -1,19 +1,19 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { pathBasedConfigGenerator } from '@/algorithms';
-import { LangTagCLIConfigGenerationEvent } from '@/type';
+import { LangTagCLIConfigGenerationContext } from '@/type';
 
 const TRIGGER_NAME = 'path-based-config-generator';
 
-function createMockEvent(
+function createMockContext(
     relativePath: string,
     includes: string[] = ['src/**/*.{js,ts,jsx,tsx}'],
     collectDefaultNamespace: string = 'common'
-): LangTagCLIConfigGenerationEvent {
+): LangTagCLIConfigGenerationContext {
     let savedConfig: any = null;
     const config: any = undefined;
 
-    const event = {
+    const context = {
         absolutePath: `/project/${relativePath}`,
         relativePath,
         isImportedLibrary: false,
@@ -47,14 +47,14 @@ function createMockEvent(
             if (savedConfig !== undefined && savedConfig !== null) {
                 return { ...savedConfig };
             }
-            if (event.config) {
-                return { ...event.config };
+            if (context.config) {
+                return { ...context.config };
             }
             return {};
         },
     } as any;
 
-    return event;
+    return context;
 }
 
 describe('pathRules >> wildcard', () => {
@@ -70,12 +70,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'components/dashboard/views/modal/list.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'ui',
                     path: 'views.modal',
@@ -95,12 +95,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'features/auth/login/form/validation.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'pages',
                     path: 'login.form',
@@ -125,12 +125,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'app/admin/users/roles/permissions.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'management',
                     path: 'admin.users.roles',
@@ -153,12 +153,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/modules/payments/checkout/summary.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'core',
                     path: 'app.payments.checkout',
@@ -181,12 +181,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'features/dashboard/charts/analytics/report.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'widgets',
                     path: 'app.dashboard.charts.analytics',
@@ -209,12 +209,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'lib/components/buttons/primary/icon.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'shared',
                     path: 'buttons.primary',
@@ -236,10 +236,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent('pages/public/landing/hero/cta.tsx');
-            await generator(event);
+            const context = createMockContext(
+                'pages/public/landing/hero/cta.tsx'
+            );
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'marketing',
                     path: 'landing.hero',
@@ -264,12 +266,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/features/billing/invoices/details.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'features.billing.invoices',
@@ -292,12 +294,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'app/modules/settings/preferences/theme.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'core.system',
                     path: 'app.modules.settings.preferences',
@@ -320,12 +322,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'components/forms/inputs/email/validator.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'form-validation',
                     path: 'inputs.email',
@@ -346,12 +348,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'features/admin/users/list/table.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'userManagement',
                     path: 'users.list',
@@ -374,12 +376,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/features/profile/settings/account.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'profile.settings',
@@ -403,12 +405,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'app/modules/admin/users/roles/groups/list.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'permissions',
                     path: 'roles.groups',
@@ -432,12 +434,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'components/dashboard/views/list.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'dashboard',
                     path: 'ui.views',
@@ -460,12 +462,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'components/dashboard/views/list.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'dashboard',
                     path: 'ui.views',
@@ -485,12 +487,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'components/dashboard/views/list.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'dashboard',
                     path: 'views',
@@ -513,12 +515,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'components/dashboard/views/list.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'dashboard',
                     path: 'ui.views',
@@ -541,12 +543,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'components/dashboard/views/list.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'dashboard',
                     path: 'ui.views',
@@ -568,12 +570,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'components/dashboard/views/list.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'dashboard',
                     path: 'ui.views',
@@ -593,12 +595,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'components/dashboard/views/list.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'dashboard',
                     path: 'views',
@@ -618,12 +620,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'components/dashboard/views/list.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'dashboard',
                     path: 'views',
@@ -643,12 +645,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'components/dashboard/views/list.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'dashboard',
                     path: 'views',
@@ -670,12 +672,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'components/dashboard/views/list.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'dashboard',
                     path: 'ui.views',
@@ -697,12 +699,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'components/dashboard/views/list.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'custom',
                     path: 'views',
@@ -725,12 +727,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'src/features/__tests__/utils/helpers.tsx'
             );
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                 },
@@ -750,10 +752,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent('app/routes/(auth)/login/form.tsx');
-            await generator(event);
+            const context = createMockContext(
+                'app/routes/(auth)/login/form.tsx'
+            );
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'pages',
                     path: 'login',
@@ -773,10 +777,10 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent('components/Button.tsx');
-            await generator(event);
+            const context = createMockContext('components/Button.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'ui',
                 },
@@ -796,10 +800,10 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent('features/Dashboard.tsx');
-            await generator(event);
+            const context = createMockContext('features/Dashboard.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'pages',
                     path: 'feature',
@@ -820,10 +824,10 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent('modules/Analytics.tsx');
-            await generator(event);
+            const context = createMockContext('modules/Analytics.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'core',
                     path: 'module',
@@ -844,10 +848,10 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent('views/Profile.tsx');
-            await generator(event);
+            const context = createMockContext('views/Profile.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'app.views',
@@ -876,10 +880,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent('app/features/auth/login/form.tsx');
-            await generator(event);
+            const context = createMockContext(
+                'app/features/auth/login/form.tsx'
+            );
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'security',
                     path: 'auth',
@@ -909,10 +915,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent('src/modules/admin/users/roles.tsx');
-            await generator(event);
+            const context = createMockContext(
+                'src/modules/admin/users/roles.tsx'
+            );
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'management',
                     path: 'admin.users',
@@ -936,10 +944,12 @@ describe('pathRules >> wildcard', () => {
                 },
             });
 
-            const event = createMockEvent('components/forms/inputs/email.tsx');
-            await generator(event);
+            const context = createMockContext(
+                'components/forms/inputs/email.tsx'
+            );
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'validation',
                     path: 'forms.inputs',

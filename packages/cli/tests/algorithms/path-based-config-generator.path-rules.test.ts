@@ -1,20 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { pathBasedConfigGenerator } from '@/algorithms';
-import { LangTagCLIConfigGenerationEvent } from '@/type';
+import { LangTagCLIConfigGenerationContext } from '@/type';
 
 const TRIGGER_NAME = 'path-based-config-generator';
 
-// Helper function to create a mock event
-function createMockEvent(
+// Helper function to create a mock context
+function createMockContext(
     relativePath: string,
     includes: string[] = ['src/**/*.{js,ts,jsx,tsx}'],
     collectDefaultNamespace: string = 'common'
-): LangTagCLIConfigGenerationEvent {
+): LangTagCLIConfigGenerationContext {
     let savedConfig: any = null;
     const config: any = undefined;
 
-    const event = {
+    const context = {
         absolutePath: `/project/${relativePath}`,
         relativePath,
         isImportedLibrary: false,
@@ -48,14 +48,14 @@ function createMockEvent(
             if (savedConfig !== undefined && savedConfig !== null) {
                 return { ...savedConfig };
             }
-            if (event.config) {
-                return { ...event.config };
+            if (context.config) {
+                return { ...context.config };
             }
             return {};
         },
     } as any;
 
-    return event;
+    return context;
 }
 
 describe('pathBasedConfigGenerator - pathRules', () => {
@@ -123,11 +123,11 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent('app/dashboard/users/List.tsx');
-            await generator(event);
+            const context = createMockContext('app/dashboard/users/List.tsx');
+            await generator(context);
 
             // dashboard is ignored, so: app -> users
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'users',
@@ -148,13 +148,13 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'app/dashboard/modules/advanced/facility/page.tsx'
             );
-            await generator(event);
+            await generator(context);
 
             // dashboard and modules ignored: app -> advanced -> facility
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'advanced.facility',
@@ -176,15 +176,15 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'app/dashboard/modules/advanced/facility/page.tsx',
                 ['app/**/*.tsx']
             );
-            await generator(event);
+            await generator(context);
 
             // app removed by ignoreIncludesRootDirectories, then dashboard and modules ignored
             // Result: advanced -> facility
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'advanced',
                     path: 'facility',
@@ -206,11 +206,11 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent('app/admin/users/List.tsx');
-            await generator(event);
+            const context = createMockContext('app/admin/users/List.tsx');
+            await generator(context);
 
             // admin renamed to management: app -> management -> users
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'management.users',
@@ -231,11 +231,13 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent('app/admin/users/profile/edit.tsx');
-            await generator(event);
+            const context = createMockContext(
+                'app/admin/users/profile/edit.tsx'
+            );
+            await generator(context);
 
             // admin -> management, users -> people
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'management.people.profile',
@@ -259,11 +261,11 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent('app/dashboard/admin/users.tsx');
-            await generator(event);
+            const context = createMockContext('app/dashboard/admin/users.tsx');
+            await generator(context);
 
             // dashboard ignored, admin renamed to mgmt
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'mgmt',
@@ -284,11 +286,13 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent('src/features/auth/login/page.tsx');
-            await generator(event);
+            const context = createMockContext(
+                'src/features/auth/login/page.tsx'
+            );
+            await generator(context);
 
             // features renamed to modules, auth ignored
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'src',
                     path: 'modules.login',
@@ -308,10 +312,10 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent('app/dashboard/users/List.tsx');
-            await generator(event);
+            const context = createMockContext('app/dashboard/users/List.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'panel.users',
@@ -333,7 +337,7 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event1 = createMockEvent('app/dashboard/modules/auth.tsx');
+            const event1 = createMockContext('app/dashboard/modules/auth.tsx');
             await generator(event1);
             expect(event1.save).toHaveBeenCalledWith(
                 {
@@ -343,7 +347,7 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 TRIGGER_NAME
             );
 
-            const event2 = createMockEvent('app/dashboard/views/home.tsx');
+            const event2 = createMockContext('app/dashboard/views/home.tsx');
             await generator(event2);
             expect(event2.save).toHaveBeenCalledWith(
                 {
@@ -365,10 +369,10 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent('app/dashboard/users/List.tsx');
-            await generator(event);
+            const context = createMockContext('app/dashboard/users/List.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'users',
@@ -386,10 +390,10 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent('app/temp/users/List.tsx');
-            await generator(event);
+            const context = createMockContext('app/temp/users/List.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'users',
@@ -413,13 +417,13 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'app/admin_panel/user_management/edit.tsx'
             );
-            await generator(event);
+            await generator(context);
 
             // admin_panel renamed to AdminDashboard, then case transforms apply
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'adminDashboard.userManagement',
@@ -443,14 +447,14 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'app/dashboard/modules/views/UserProfile/edit.tsx'
             );
-            await generator(event);
+            await generator(context);
 
             // dashboard and modules ignored by pathRules, views ignored by ignoreDirectories
             // Result: app (kebab) -> UserProfile (camel)
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'userProfile',
@@ -479,20 +483,20 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'app/dashboard/modules/advanced/facility/[id]/edit/page.tsx',
                 ['app/**/*.{js,ts,jsx,tsx}'],
                 'common'
             );
 
-            await generator(event);
+            await generator(context);
 
             // Expected transformation:
             // 1. Remove brackets: [id] removed
             // 2. pathRules: dashboard and modules ignored
             // 3. ignoreIncludesRootDirectories: app removed
             // 4. Result: advanced -> facility -> edit
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'advanced',
                     path: 'facility.edit',
@@ -514,14 +518,14 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'app/dashboard/modules/users/list.tsx',
                 ['app/**/*.tsx']
             );
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'panel',
                     path: 'users',
@@ -537,10 +541,10 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 pathRules: {},
             });
 
-            const event = createMockEvent('app/dashboard/users/List.tsx');
-            await generator(event);
+            const context = createMockContext('app/dashboard/users/List.tsx');
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'dashboard.users',
@@ -558,11 +562,11 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent('app/dashboard/users/List.tsx');
-            await generator(event);
+            const context = createMockContext('app/dashboard/users/List.tsx');
+            await generator(context);
 
             // No rules match, so path remains unchanged
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'dashboard.users',
@@ -580,15 +584,15 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 clearOnDefaultNamespace: false,
             });
 
-            const event = createMockEvent(
+            const context = createMockContext(
                 'app/Button.tsx',
                 ['app/**/*.tsx'],
                 'default'
             );
-            await generator(event);
+            await generator(context);
 
             // app ignored, fallback to common
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'common',
                 },
@@ -607,15 +611,15 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event = createMockEvent('app/dashboard/users/List.tsx');
-            (event as any).config = {
+            const context = createMockContext('app/dashboard/users/List.tsx');
+            (context as any).config = {
                 manual: true,
                 customFlag: 'test',
             };
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     namespace: 'app',
                     path: 'users',
@@ -637,7 +641,7 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 },
             });
 
-            const event1 = createMockEvent('src/features/auth/login.tsx');
+            const event1 = createMockContext('src/features/auth/login.tsx');
             await generator(event1);
 
             // auth is in the array, so it gets ignored
@@ -649,7 +653,7 @@ describe('pathBasedConfigGenerator - pathRules', () => {
                 TRIGGER_NAME
             );
 
-            const event2 = createMockEvent('src/features/orders/list.tsx');
+            const event2 = createMockContext('src/features/orders/list.tsx');
             await generator(event2);
 
             // orders is not in the array, so it remains

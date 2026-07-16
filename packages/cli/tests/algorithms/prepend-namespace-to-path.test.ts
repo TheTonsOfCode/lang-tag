@@ -1,16 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { prependNamespaceToPath } from '@/algorithms';
-import { LangTagCLIConfigGenerationEvent } from '@/type';
+import { LangTagCLIConfigGenerationContext } from '@/type';
 
 const TRIGGER_NAME = 'prepend-namespace-to-path';
 
-// Helper function to create a mock event
-function createMockEvent(
+// Helper function to create a mock context
+function createMockContext(
     config: any = undefined,
     savedConfig: any = undefined,
     defaultNamespace: string = 'common'
-): LangTagCLIConfigGenerationEvent {
+): LangTagCLIConfigGenerationContext {
     let savedConfigValue: any = savedConfig;
 
     return {
@@ -62,14 +62,14 @@ describe('prependNamespaceToPath', () => {
     describe('Basic functionality', () => {
         it('should prepend namespace to path when both exist', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(undefined, {
+            const context = createMockContext(undefined, {
                 namespace: 'common',
                 path: 'hello.world',
             });
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     path: 'common.hello.world',
                     namespace: undefined,
@@ -80,13 +80,13 @@ describe('prependNamespaceToPath', () => {
 
         it('should use namespace as path when no path exists', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(undefined, {
+            const context = createMockContext(undefined, {
                 namespace: 'common',
             });
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     path: 'common',
                     namespace: undefined,
@@ -97,7 +97,7 @@ describe('prependNamespaceToPath', () => {
 
         it('should use defaultNamespace when no namespace in savedConfig', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(
+            const context = createMockContext(
                 undefined,
                 {
                     path: 'hello.world',
@@ -105,9 +105,9 @@ describe('prependNamespaceToPath', () => {
                 'default'
             );
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     path: 'default.hello.world',
                     namespace: undefined,
@@ -118,11 +118,11 @@ describe('prependNamespaceToPath', () => {
 
         it('should use defaultNamespace when no savedConfig at all', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(undefined, undefined, 'default');
+            const context = createMockContext(undefined, undefined, 'default');
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     path: 'default',
                     namespace: undefined,
@@ -135,14 +135,14 @@ describe('prependNamespaceToPath', () => {
     describe('Working with savedConfig', () => {
         it('should use savedConfig when available', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(undefined, {
+            const context = createMockContext(undefined, {
                 namespace: 'new',
                 path: 'new.path',
             });
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     path: 'new.new.path',
                     namespace: undefined,
@@ -153,27 +153,27 @@ describe('prependNamespaceToPath', () => {
 
         it('should not save when savedConfig is null and no defaultNamespace', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(undefined, null, undefined);
+            const context = createMockContext(undefined, null, undefined);
 
             // Override langTagConfig to have no defaultNamespace
-            (event as any).langTagConfig.collect = {};
+            (context as any).langTagConfig.collect = {};
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).not.toHaveBeenCalled();
+            expect(context.save).not.toHaveBeenCalled();
         });
 
         it('should use defaultNamespace when savedConfig has no namespace', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(
+            const context = createMockContext(
                 undefined,
                 { path: 'saved.path' },
                 'default'
             );
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     path: 'default.saved.path',
                     namespace: undefined,
@@ -186,7 +186,7 @@ describe('prependNamespaceToPath', () => {
     describe('Edge cases', () => {
         it('should not save when no namespace available and no defaultNamespace', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(
+            const context = createMockContext(
                 undefined,
                 {
                     path: 'hello.world',
@@ -195,23 +195,23 @@ describe('prependNamespaceToPath', () => {
             );
 
             // Override langTagConfig to have no defaultNamespace
-            (event as any).langTagConfig.collect = {};
+            (context as any).langTagConfig.collect = {};
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).not.toHaveBeenCalled();
+            expect(context.save).not.toHaveBeenCalled();
         });
 
         it('should handle empty path with namespace', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(undefined, {
+            const context = createMockContext(undefined, {
                 namespace: 'common',
                 path: '',
             });
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     path: 'common',
                     namespace: undefined,
@@ -222,13 +222,13 @@ describe('prependNamespaceToPath', () => {
 
         it('should handle undefined path with namespace', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(undefined, {
+            const context = createMockContext(undefined, {
                 namespace: 'common',
             });
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     path: 'common',
                     namespace: undefined,
@@ -241,16 +241,16 @@ describe('prependNamespaceToPath', () => {
     describe('Preserving other config properties', () => {
         it('should preserve custom properties from savedConfig', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(undefined, {
+            const context = createMockContext(undefined, {
                 namespace: 'common',
                 path: 'hello.world',
                 debugMode: true,
                 customFlag: 'test',
             });
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     debugMode: true,
                     customFlag: 'test',
@@ -263,7 +263,7 @@ describe('prependNamespaceToPath', () => {
 
         it('should preserve complex nested properties', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(undefined, {
+            const context = createMockContext(undefined, {
                 namespace: 'common',
                 path: 'hello.world',
                 settings: {
@@ -276,9 +276,9 @@ describe('prependNamespaceToPath', () => {
                 },
             });
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     settings: {
                         feature: 'enabled',
@@ -299,14 +299,14 @@ describe('prependNamespaceToPath', () => {
     describe('Real-world scenarios', () => {
         it('should handle typical namespace flattening scenario', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(undefined, {
+            const context = createMockContext(undefined, {
                 namespace: 'features',
                 path: 'auth.login',
             });
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     path: 'features.auth.login',
                     namespace: undefined,
@@ -317,7 +317,7 @@ describe('prependNamespaceToPath', () => {
 
         it('should handle default namespace scenario', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(
+            const context = createMockContext(
                 undefined,
                 {
                     path: 'welcome.message',
@@ -325,9 +325,9 @@ describe('prependNamespaceToPath', () => {
                 'app'
             );
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     path: 'app.welcome.message',
                     namespace: undefined,
@@ -338,13 +338,13 @@ describe('prependNamespaceToPath', () => {
 
         it('should handle namespace-only scenario', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(undefined, {
+            const context = createMockContext(undefined, {
                 namespace: 'common',
             });
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     path: 'common',
                     namespace: undefined,
@@ -355,16 +355,16 @@ describe('prependNamespaceToPath', () => {
 
         it('should handle complex savedConfig scenario', async () => {
             const generator = prependNamespaceToPath();
-            const event = createMockEvent(undefined, {
+            const context = createMockContext(undefined, {
                 namespace: 'dashboard',
                 path: 'users.list',
                 theme: 'dark',
                 permissions: ['read', 'write'],
             });
 
-            await generator(event);
+            await generator(context);
 
-            expect(event.save).toHaveBeenCalledWith(
+            expect(context.save).toHaveBeenCalledWith(
                 {
                     theme: 'dark',
                     permissions: ['read', 'write'],

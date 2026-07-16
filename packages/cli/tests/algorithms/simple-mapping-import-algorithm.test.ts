@@ -5,12 +5,12 @@ import {
     simpleMappingImportAlgorithm,
 } from '@/algorithms/import/simple-mapping-import-algorithm';
 import type { LangTagCLILogger } from '@/logger';
-import type { LangTagCLIImportEvent, LangTagCLIImportManager } from '@/type';
+import type { LangTagCLIImportContext, LangTagCLIImportManager } from '@/type';
 
 describe('simpleMappingImportAlgorithm', () => {
     let mockImportManager: LangTagCLIImportManager;
     let mockLogger: LangTagCLILogger;
-    let mockEvent: LangTagCLIImportEvent;
+    let mockContext: LangTagCLIImportContext;
 
     beforeEach(() => {
         mockImportManager = {
@@ -29,7 +29,7 @@ describe('simpleMappingImportAlgorithm', () => {
             conflict: vi.fn(),
         };
 
-        mockEvent = {
+        mockContext = {
             exports: [],
             langTagConfig: {} as any,
             logger: mockLogger,
@@ -59,7 +59,7 @@ describe('simpleMappingImportAlgorithm', () => {
 
             const algorithm = simpleMappingImportAlgorithm(options);
 
-            mockEvent.exports = [
+            mockContext.exports = [
                 {
                     packageJSON: { name: '@company/ui-components' },
                     exportData: {
@@ -92,7 +92,7 @@ describe('simpleMappingImportAlgorithm', () => {
                 },
             ];
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
             expect(mockImportManager.importTag).toHaveBeenCalledTimes(2);
             expect(mockImportManager.importTag).toHaveBeenNthCalledWith(
@@ -127,7 +127,7 @@ describe('simpleMappingImportAlgorithm', () => {
 
             const algorithm = simpleMappingImportAlgorithm(options);
 
-            mockEvent.exports = [
+            mockContext.exports = [
                 {
                     packageJSON: { name: '@company/ui-components' },
                     exportData: { baseLanguageCode: 'en', files: [] },
@@ -152,7 +152,7 @@ describe('simpleMappingImportAlgorithm', () => {
                 },
             ];
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
             expect(mockImportManager.importTag).not.toHaveBeenCalled();
             expect(mockLogger.debug).toHaveBeenCalledWith(
@@ -178,7 +178,7 @@ describe('simpleMappingImportAlgorithm', () => {
 
             const algorithm = simpleMappingImportAlgorithm(options);
 
-            mockEvent.exports = [
+            mockContext.exports = [
                 {
                     packageJSON: { name: '@company/ui-components' },
                     exportData: {
@@ -209,7 +209,7 @@ describe('simpleMappingImportAlgorithm', () => {
                 },
             ];
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
             expect(mockImportManager.importTag).toHaveBeenCalledTimes(1);
             expect(mockLogger.debug).toHaveBeenCalledWith(
@@ -238,7 +238,7 @@ describe('simpleMappingImportAlgorithm', () => {
 
             const algorithm = simpleMappingImportAlgorithm(options);
 
-            mockEvent.exports = [
+            mockContext.exports = [
                 {
                     packageJSON: { name: '@company/ui-components' },
                     exportData: {
@@ -264,7 +264,7 @@ describe('simpleMappingImportAlgorithm', () => {
                 },
             ];
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
             expect(mockImportManager.importTag).toHaveBeenCalledTimes(1);
             expect(mockLogger.debug).toHaveBeenCalledWith(
@@ -293,7 +293,7 @@ describe('simpleMappingImportAlgorithm', () => {
 
             const algorithm = simpleMappingImportAlgorithm(options);
 
-            mockEvent.exports = [
+            mockContext.exports = [
                 {
                     packageJSON: { name: '@company/ui-components' },
                     exportData: {
@@ -321,7 +321,7 @@ describe('simpleMappingImportAlgorithm', () => {
                 },
             ];
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
             expect(mockImportManager.importTag).toHaveBeenCalledTimes(2);
             expect(mockImportManager.importTag).toHaveBeenNthCalledWith(
@@ -367,7 +367,7 @@ describe('simpleMappingImportAlgorithm', () => {
 
             const algorithm = simpleMappingImportAlgorithm(options);
 
-            mockEvent.exports = [
+            mockContext.exports = [
                 {
                     packageJSON: { name: '@company/ui-components' },
                     exportData: {
@@ -391,7 +391,7 @@ describe('simpleMappingImportAlgorithm', () => {
                 },
             ];
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
             expect(mockImportManager.importTag).toHaveBeenCalledWith(
                 'ui/buttons.ts',
@@ -425,7 +425,7 @@ describe('simpleMappingImportAlgorithm', () => {
 
             const algorithm = simpleMappingImportAlgorithm(options);
 
-            mockEvent.exports = [
+            mockContext.exports = [
                 {
                     packageJSON: { name: '@company/ui-components' },
                     exportData: {
@@ -446,7 +446,7 @@ describe('simpleMappingImportAlgorithm', () => {
                 },
             ];
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
             expect(mockImportManager.importTag).toHaveBeenCalledWith(
                 'ui/buttons.ts',
@@ -488,7 +488,7 @@ describe('simpleMappingImportAlgorithm', () => {
 
             const algorithm = simpleMappingImportAlgorithm(options);
 
-            mockEvent.exports = [
+            mockContext.exports = [
                 {
                     packageJSON: { name: '@company/ui-components' },
                     exportData: {
@@ -527,7 +527,7 @@ describe('simpleMappingImportAlgorithm', () => {
                 },
             ];
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
             expect(mockImportManager.importTag).toHaveBeenCalledTimes(2);
             expect(mockImportManager.importTag).toHaveBeenNthCalledWith(
@@ -569,7 +569,7 @@ describe('simpleMappingImportAlgorithm', () => {
 
             const algorithm = simpleMappingImportAlgorithm(options);
 
-            mockEvent.exports = [
+            mockContext.exports = [
                 {
                     packageJSON: { name: '@company/ui-components' },
                     exportData: {
@@ -600,7 +600,7 @@ describe('simpleMappingImportAlgorithm', () => {
                 },
             ];
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
             expect(mockImportManager.importTag).toHaveBeenCalledTimes(2);
             expect(mockImportManager.importTag).toHaveBeenNthCalledWith(
@@ -628,7 +628,7 @@ describe('simpleMappingImportAlgorithm', () => {
 
             const algorithm = simpleMappingImportAlgorithm(options);
 
-            mockEvent.exports = [
+            mockContext.exports = [
                 {
                     packageJSON: { name: '@company/ui-components' },
                     exportData: {
@@ -649,7 +649,7 @@ describe('simpleMappingImportAlgorithm', () => {
                 },
             ];
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
             expect(mockImportManager.importTag).not.toHaveBeenCalled();
         });
@@ -666,7 +666,7 @@ describe('simpleMappingImportAlgorithm', () => {
 
             const algorithm = simpleMappingImportAlgorithm(options);
 
-            mockEvent.exports = [
+            mockContext.exports = [
                 {
                     packageJSON: { name: '@company/ui-components' },
                     exportData: {
@@ -687,7 +687,7 @@ describe('simpleMappingImportAlgorithm', () => {
                 },
             ];
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
             expect(mockImportManager.importTag).not.toHaveBeenCalled();
         });
@@ -710,7 +710,7 @@ describe('simpleMappingImportAlgorithm', () => {
 
             const algorithm = simpleMappingImportAlgorithm(options);
 
-            mockEvent.exports = [
+            mockContext.exports = [
                 {
                     packageJSON: { name: '@company/ui-components' },
                     exportData: {
@@ -731,7 +731,7 @@ describe('simpleMappingImportAlgorithm', () => {
                 },
             ];
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
             expect(mockImportManager.importTag).not.toHaveBeenCalled();
         });
@@ -754,7 +754,7 @@ describe('simpleMappingImportAlgorithm', () => {
 
             const algorithm = simpleMappingImportAlgorithm(options);
 
-            mockEvent.exports = [
+            mockContext.exports = [
                 {
                     packageJSON: { name: '@company/ui-components' },
                     exportData: {
@@ -780,7 +780,7 @@ describe('simpleMappingImportAlgorithm', () => {
                 },
             ];
 
-            algorithm(mockEvent);
+            algorithm(mockContext);
 
             expect(mockImportManager.importTag).toHaveBeenCalledTimes(1);
             expect(mockLogger.debug).toHaveBeenCalledWith(

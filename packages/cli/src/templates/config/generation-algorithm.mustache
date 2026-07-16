@@ -1,7 +1,7 @@
 {{#addComments}}
 /**
- * Handler for onConfigGeneration (from pathBasedConfigGenerator).
- * Generates namespace/path from directory structure (filename is excluded).
+ * pathBasedConfigGenerator — used by onConfigGeneration below.
+ * Derives namespace/path from the file's directory structure (filename excluded by default).
  *
  * Example with current settings (assuming includes: ['src/**']):
  *   File: src/(admin)/features/auth/utils/LoginForm.tsx
