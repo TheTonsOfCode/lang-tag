@@ -18,10 +18,10 @@ import type { CallableTranslations, PlaceholderParamsOptions } from 'lang-tag';
  * resulting string. Extra arguments are forwarded to the resolved translation
  * function (typically its interpolation params).
  *
- * @template Keys - The allowed key type. Defaults to `string` (any key). When
- * the {@link DynamicCallerPresetOptions.typedKeys | typedKeys} option is enabled
- * this is narrowed to the union of the object's translation keys, so the editor
- * autocompletes valid keys and rejects unknown ones at compile time.
+ * @template Keys - The allowed key type. Defaults to the union of the object's
+ * translation keys when {@link DynamicCallerPresetOptions.typedKeys | typedKeys}
+ * is enabled (the default), so the editor autocompletes valid keys and rejects
+ * unknown ones at compile time. Pass `typedKeys: false` to keep `string`.
  */
 export type DynamicCaller<Keys extends string = string> = (
     key: Keys,
@@ -63,11 +63,11 @@ export interface DynamicCallerPresetOptions<Caller extends string = '$'> {
      */
     onMissing?: (path: string) => string;
     /**
-     * When `true`, the caller's `key` argument is typed to the object's actual
-     * translation keys ({@link DynamicCallerKeys}) instead of `string`, so the
-     * editor autocompletes valid keys and rejects unknown ones at compile time.
-     * Defaults to `false` (any `string` key is accepted). Purely a type-level
-     * switch — it has no effect at runtime.
+     * When `true` (default), the caller's `key` argument is typed to the object's
+     * actual translation keys ({@link DynamicCallerKeys}) instead of `string`, so
+     * the editor autocompletes valid keys and rejects unknown ones at compile time.
+     * Pass `false` to accept any `string` key. Purely a type-level switch — no
+     * runtime effect.
      */
     typedKeys?: boolean;
 }
@@ -86,7 +86,7 @@ export type WithDynamicCaller<
     T,
     Caller extends string,
     Recursive extends boolean,
-    TypedKeys extends boolean = false,
+    TypedKeys extends boolean = true,
 > = {
     [K in keyof T]: Recursive extends true
         ? T[K] extends (...args: any[]) => any
@@ -112,7 +112,8 @@ export type WithDynamicCaller<
  * @returns The translations object with the caller property added.
  * @example
  * const t = withDynamicCaller(base.server());
- * t.$('greeting', { name: 'Paul' });
+ * t.$('greeting', { name: 'Paul' }); // key narrowed to translation keys by default
+ * t.$('nope'); // compile-time error
  * @example
  * const t = withDynamicCaller(base.server(), {
  *     recursive: true,
@@ -121,16 +122,15 @@ export type WithDynamicCaller<
  * });
  * t.user.call('name');
  * @example
- * // typedKeys narrows the caller's key to the translation keys:
- * const t = withDynamicCaller(base.server(), { typedKeys: true });
- * t.$('greeting'); // ok
- * t.$('nope');     // compile-time error
+ * // Opt out of key narrowing when you need an open string key:
+ * const t = withDynamicCaller(base.server(), { typedKeys: false });
+ * t.$('any-runtime-key'); // ok
  */
 export function withDynamicCaller<
     T extends Record<string, any>,
     const Caller extends string = '$',
     Recursive extends boolean = false,
-    TypedKeys extends boolean = false,
+    TypedKeys extends boolean = true,
 >(
     translations: T,
     options: {
@@ -199,7 +199,7 @@ export type CallableTranslationsWithDynamicCaller<
     PPO extends PlaceholderParamsOptions = {},
     Caller extends string = '$',
     Recursive extends boolean = false,
-    TypedKeys extends boolean = false,
+    TypedKeys extends boolean = true,
 > = WithDynamicCaller<
     CallableTranslations<T, PPO>,
     Caller,

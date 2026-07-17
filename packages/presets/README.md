@@ -44,12 +44,12 @@ t.$('unknown'); // -> "#Missing:unknown#"
 
 #### Options
 
-| Option       | Type                       | Default       | Description                                                                                                                            |
-| ------------ | -------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `callerName` | `string`                   | `'$'`         | Name of the injected caller property.                                                                                                  |
-| `recursive`  | `boolean`                  | `false`       | Also add the caller to every nested translations object.                                                                               |
-| `onMissing`  | `(path: string) => string` | `#Missing:…#` | Called when a key can't be resolved. With `recursive`, `path` is the full dotted path.                                                 |
-| `typedKeys`  | `boolean`                  | `false`       | Type the caller's `key` argument to the object's translation keys (autocomplete + rejects unknown keys). Type-only, no runtime effect. |
+| Option       | Type                       | Default       | Description                                                                                                                                                                 |
+| ------------ | -------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `callerName` | `string`                   | `'$'`         | Name of the injected caller property.                                                                                                                                       |
+| `recursive`  | `boolean`                  | `false`       | Also add the caller to every nested translations object.                                                                                                                    |
+| `onMissing`  | `(path: string) => string` | `#Missing:…#` | Called when a key can't be resolved. With `recursive`, `path` is the full dotted path.                                                                                      |
+| `typedKeys`  | `boolean`                  | `true`        | Type the caller's `key` argument to the object's translation keys (autocomplete + rejects unknown keys). Pass `false` for open `string` keys. Type-only, no runtime effect. |
 
 ```ts
 const t = withDynamicCaller(base.server(), {
@@ -64,14 +64,22 @@ t.user.call('name'); // caller is available on nested objects too
 
 #### Typed keys
 
-With `typedKeys: true`, the caller's key is narrowed to the actual translation
-keys, so the editor autocompletes them and rejects unknown keys at compile time:
+By default, the caller's key is narrowed to the actual translation keys, so the
+editor autocompletes them and rejects unknown keys at compile time:
 
 ```ts
-const t = withDynamicCaller(base.server(), { typedKeys: true });
+const t = withDynamicCaller(base.server());
 
 t.$('greeting'); // ok
 t.$('nope'); // compile-time error
+```
+
+Pass `typedKeys: false` when you need an open `string` key (e.g. fully dynamic
+runtime paths):
+
+```ts
+const t = withDynamicCaller(base.server(), { typedKeys: false });
+t.$('any-runtime-key'); // ok
 ```
 
 ### `react/placeholders`

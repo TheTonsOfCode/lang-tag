@@ -32,8 +32,8 @@ type Base = {
 
 type Default = WithDynamicCaller<Base, '$', false>;
 
-// The '$' caller is added at the top level...
-type _DefaultCaller = Expect<Equal<Default['$'], DynamicCaller>>;
+// typedKeys defaults to true: key is narrowed to callable translation keys.
+type _DefaultCaller = Expect<Equal<Default['$'], DynamicCaller<'greeting'>>>;
 // ...original members are preserved untouched...
 type _DefaultGreeting = Expect<Equal<Default['greeting'], Base['greeting']>>;
 // ...and nested objects do NOT receive a caller.
@@ -43,16 +43,22 @@ type _DefaultNested = Expect<Equal<Default['user'], Base['user']>>;
 
 type Recursive = WithDynamicCaller<Base, 'call', true>;
 
-type _RecursiveTop = Expect<Equal<Recursive['call'], DynamicCaller>>;
-type _RecursiveNested = Expect<Equal<Recursive['user']['call'], DynamicCaller>>;
+type _RecursiveTop = Expect<
+    Equal<Recursive['call'], DynamicCaller<'greeting'>>
+>;
+type _RecursiveNested = Expect<
+    Equal<Recursive['user']['call'], DynamicCaller<'name'>>
+>;
 // Translation functions survive the recursive wrapping.
 type _RecursiveFn = Expect<Equal<Recursive['user']['name'], () => string>>;
 
 // --- A different caller name is honoured verbatim ---------------------------
 
 type Renamed = WithDynamicCaller<Base, '__X', true>;
-type _RenamedTop = Expect<Equal<Renamed['__X'], DynamicCaller>>;
-type _RenamedNested = Expect<Equal<Renamed['user']['__X'], DynamicCaller>>;
+type _RenamedTop = Expect<Equal<Renamed['__X'], DynamicCaller<'greeting'>>>;
+type _RenamedNested = Expect<
+    Equal<Renamed['user']['__X'], DynamicCaller<'name'>>
+>;
 
 // --- Inference through withDynamicCaller ------------------------------------
 
@@ -61,6 +67,8 @@ declare const base: Base;
 const def = withDynamicCaller(base);
 def.$('greeting');
 def.greeting({ name: 'Ada' });
+// @ts-expect-error unknown keys are rejected by default (typedKeys: true)
+def.$('nope');
 // @ts-expect-error nested objects have no caller unless `recursive` is set
 def.user.$('name');
 
@@ -73,22 +81,22 @@ const rec = withDynamicCaller(base, { recursive: true });
 rec.$('greeting');
 rec.user.$('name');
 
-// The caller accepts a runtime key plus forwarded params and returns a string.
+// The open DynamicCaller helper still accepts any string key.
 declare const caller: DynamicCaller;
 caller('some.key', { any: 'params' }) satisfies string;
 // @ts-expect-error the key argument is required
 caller();
 
 // ---------------------------------------------------------------------------
-// typedKeys: narrows the caller's key to the object's translation keys.
+// typedKeys: default true; opt out with typedKeys: false.
 // ---------------------------------------------------------------------------
 
-// Without typedKeys the key stays `string` (any key accepted).
-type LooseCaller = WithDynamicCaller<Base, '$', false>['$'];
+// Explicit typedKeys: false keeps the key as `string` (any key accepted).
+type LooseCaller = WithDynamicCaller<Base, '$', false, false>['$'];
 type _LooseKey = Expect<Equal<Parameters<LooseCaller>[0], string>>;
 
-// With typedKeys the key becomes the union of *callable* keys (nested
-// translation objects are excluded — you navigate to those via property access).
+// Default / typedKeys: true → union of *callable* keys (nested translation
+// objects are excluded — navigate to those via property access).
 type TypedTop = WithDynamicCaller<Base, '$', false, true>['$'];
 type _TypedTopKey = Expect<Equal<Parameters<TypedTop>[0], 'greeting'>>;
 
@@ -96,12 +104,15 @@ type _TypedTopKey = Expect<Equal<Parameters<TypedTop>[0], 'greeting'>>;
 type TypedNested = WithDynamicCaller<Base, '$', true, true>['user']['$'];
 type _TypedNestedKey = Expect<Equal<Parameters<TypedNested>[0], 'name'>>;
 
-const typed = withDynamicCaller(base, { typedKeys: true });
+const typed = withDynamicCaller(base);
 typed.$('greeting');
 // @ts-expect-error 'nope' is not a translation key
 typed.$('nope');
 // @ts-expect-error 'user' is a nested object, not a callable translation key
 typed.$('user');
+
+const loose = withDynamicCaller(base, { typedKeys: false });
+loose.$('nope'); // allowed: key is `string`
 
 // ---------------------------------------------------------------------------
 // Scenario from the issue: keys come from a Record<Union, ...> shape.
@@ -115,7 +126,6 @@ declare const statusTranslations: Record<Status, () => string>;
 const statusTyped = withDynamicCaller(statusTranslations, {
     callerName: '__X',
     recursive: true,
-    typedKeys: true,
 });
 
 statusTyped.__X('new');
@@ -132,10 +142,10 @@ type StatusCaller = WithDynamicCaller<
 >['__X'];
 type _StatusKeys = Expect<Equal<Parameters<StatusCaller>[0], Status>>;
 
-// Without typedKeys the same shape stays permissive (matches the issue's first
-// example, where `lang` does not opt into typed keys).
+// Opt out when a fully open string key is needed.
 const statusLoose = withDynamicCaller(statusTranslations, {
     callerName: '__X',
     recursive: true,
+    typedKeys: false,
 });
 statusLoose.__X('saxas'); // allowed: key is `string`

@@ -24,7 +24,8 @@ describe('withDynamicCaller', () => {
     });
 
     it('returns the default missing marker for unknown keys', () => {
-        const t = withDynamicCaller(makeBase());
+        // typedKeys: false so we can pass a deliberately unknown key at compile time
+        const t = withDynamicCaller(makeBase(), { typedKeys: false });
         expect(t.$('nope')).toBe('#Missing:nope#');
     });
 
@@ -35,6 +36,7 @@ describe('withDynamicCaller', () => {
 
     it('supports a custom onMissing handler', () => {
         const t = withDynamicCaller(makeBase(), {
+            typedKeys: false,
             onMissing: (path) => `[[${path}]]`,
         });
         expect(t.$('nope')).toBe('[[nope]]');
@@ -56,6 +58,7 @@ describe('withDynamicCaller', () => {
         it('reports the full dotted path to onMissing', () => {
             const t = withDynamicCaller(makeBase(), {
                 recursive: true,
+                typedKeys: false,
                 onMissing: (path) => `missing:${path}`,
             });
             expect(t.$('nope')).toBe('missing:nope');
@@ -74,9 +77,12 @@ describe('withDynamicCaller', () => {
 
     describe('typedKeys', () => {
         it('is a type-only switch and does not change runtime behaviour', () => {
-            const t = withDynamicCaller(makeBase(), { typedKeys: true });
+            const t = withDynamicCaller(makeBase());
             expect(t.$('farewell')).toBe('Goodbye');
             expect(t.$('greeting', { name: 'Paul' })).toBe('Hello Paul');
+
+            const loose = withDynamicCaller(makeBase(), { typedKeys: false });
+            expect(loose.$('farewell')).toBe('Goodbye');
         });
     });
 });
