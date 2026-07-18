@@ -1,9 +1,9 @@
 {{#isTypeScript}}
 import {
     type CallableTranslations,
+    type DefinePlaceholderParams,
     type LangTagTranslations,
     type LangTagTranslationsConfig,
-    type PlaceholderStrictnessLevel,
     type PartialFlexibleTranslations,
     createCallableTranslations,
     normalizeTranslations,
@@ -29,13 +29,18 @@ interface TagConfig extends LangTagTranslationsConfig {
 
 /**
  * How placeholder parameters (e.g. `{{name}}`) are inferred. See PlaceholderParamsOptions
- * for every option (level, value, extractor).
+ * for every option (required, allowExtras, value, extractor).
  *
  * For a different placeholder syntax (e.g. `${name}`) plug in a ready-made extractor:
  *   import type { DollarBraceExtractor } from 'lang-tag';
- *   type PlaceholderParams = { level: PlaceholderStrictnessLevel<'optional-open'>; extractor: DollarBraceExtractor };
+ *   type PlaceholderParams = DefinePlaceholderParams<{
+ *       required: false; allowExtras: true; extractor: DollarBraceExtractor;
+ *   }>;
  */
-type PlaceholderParams = { level: PlaceholderStrictnessLevel<'optional-open'> };
+type PlaceholderParams = DefinePlaceholderParams<{
+    required: false;
+    allowExtras: true;
+}>;
 
 /**
 * Ensures the Tag type compiles into a named alias rather than an expanded structural type,

@@ -102,60 +102,38 @@ export interface DollarBraceExtractor extends PlaceholderExtractor {
 }
 
 // ---------------------------------------------------------------------------
-// Strictness levels (named, kebab-case).
+// Strictness axes (`required` × `allowExtras`).
 // ---------------------------------------------------------------------------
 
 /**
- * Controls how strictly inferred placeholder parameters are enforced. The name
- * encodes two independent axes, `<presence>-<extras>`:
+ * Controls how strictly inferred placeholder parameters are enforced via two
+ * independent booleans:
  *
- * - **presence**: `optional` — placeholders may be omitted; `required` — all must be provided.
- * - **extras**: `open` — additional, non-inferred keys are accepted; `closed` — only known placeholders.
+ * - **`required`**: `false` — placeholders may be omitted; `true` — all must be provided.
+ * - **`allowExtras`**: `true` — additional, non-inferred keys are accepted; `false` — only known placeholders.
  *
- * | Level               | Placeholders | Extra keys | Notes                          |
- * | ------------------- | ------------ | ---------- | ------------------------------ |
- * | `'optional-open'`   | optional     | allowed    | Default. Autocomplete, permissive. |
- * | `'optional-closed'` | optional     | rejected   | Autocomplete, only placeholders.   |
- * | `'required-open'`   | required     | allowed    | Must provide placeholders; extras ok. |
- * | `'required-closed'` | required     | rejected   | Strictest: exactly the placeholders. |
+ * | `required` | `allowExtras` | Placeholders | Extra keys | Notes                              |
+ * | ---------- | ------------- | ------------ | ---------- | ---------------------------------- |
+ * | `false`    | `true`        | optional     | allowed    | Default. Autocomplete, permissive. |
+ * | `false`    | `false`       | optional     | rejected   | Autocomplete, only placeholders.   |
+ * | `true`     | `true`        | required     | allowed    | Must provide placeholders; extras ok. |
+ * | `true`     | `false`       | required     | rejected   | Strictest: exactly the placeholders. |
  *
  * Strings without placeholders always fall back to {@link InterpolationParams}
- * (permissive) regardless of level, since there is nothing to infer or enforce.
+ * (permissive) regardless of these flags, since there is nothing to infer or enforce.
  */
-export type PlaceholderStrictness =
-    | 'optional-open'
-    | 'optional-closed'
-    | 'required-open'
-    | 'required-closed';
-
-/**
- * Picks a single placeholder-strictness level in one line, with editor autocomplete.
- * The argument is constrained to {@link PlaceholderStrictness} (see it for the four
- * levels), so editors suggest the levels as you type, the result stays the narrow
- * literal you picked, and a typo is rejected.
- * @example type PlaceholderParams = { level: PlaceholderStrictnessLevel<'optional-open'> };
- */
-export type PlaceholderStrictnessLevel<L extends PlaceholderStrictness> = L;
-
-/** Whether a level requires all placeholders to be provided. */
-type IsRequired<Level extends PlaceholderStrictness> =
-    Level extends `required-${string}` ? true : false;
-/** Whether a level accepts extra, non-inferred keys. */
-type IsOpen<Level extends PlaceholderStrictness> = Level extends `${string}-open`
-    ? true
-    : false;
 
 /** Builds the placeholder-values record for the given axes. */
 type BuildPlaceholderValues<
     Keys extends string,
     Value,
     Required extends boolean,
-    Open extends boolean,
+    AllowExtras extends boolean,
 > = Required extends true
-    ? Open extends true
+    ? AllowExtras extends true
         ? Record<Keys, Value> & Record<string, unknown>
         : Record<Keys, Value>
-    : Open extends true
+    : AllowExtras extends true
       ? Partial<Record<Keys, Value>> & Record<string, unknown>
       : Partial<Record<Keys, Value>>;
 
@@ -165,16 +143,18 @@ type BuildPlaceholderValues<
 
 /**
  * Derives the placeholder-values object shape from a translation string, according to
- * a {@link PlaceholderStrictness} level and a {@link PlaceholderExtractor}.
+ * the `required` / `allowExtras` axes and a {@link PlaceholderExtractor}.
  * When the string has no placeholders it falls back to {@link InterpolationParams}.
  * @template S - The literal translation string.
- * @template Level - The strictness level. Defaults to `'optional-open'`.
+ * @template Required - Whether all placeholders must be provided. Defaults to `false`.
+ * @template AllowExtras - Whether extra, non-inferred keys are accepted. Defaults to `true`.
  * @template Value - The value type accepted for each placeholder. Defaults to `any`.
  * @template Extractor - The placeholder extractor. Defaults to {@link DoubleBraceExtractor} (`{{...}}`).
  */
 export type PlaceholderValues<
     S extends string,
-    Level extends PlaceholderStrictness = 'optional-open',
+    Required extends boolean = false,
+    AllowExtras extends boolean = true,
     Value = any,
     Extractor extends PlaceholderExtractor = DoubleBraceExtractor,
 > = [ApplyPlaceholderExtractor<Extractor, S>] extends [never]
@@ -182,29 +162,47 @@ export type PlaceholderValues<
     : BuildPlaceholderValues<
           ApplyPlaceholderExtractor<Extractor, S>,
           Value,
-          IsRequired<Level>,
-          IsOpen<Level>
+          Required,
+          AllowExtras
       >;
 
 /**
  * Builds the callable translation function type for a single translation-string leaf,
- * inferring its parameters from placeholders and applying the {@link PlaceholderStrictness} level.
- * At `required-*` levels the parameters argument is mandatory; otherwise it is optional.
+ * inferring its parameters from placeholders and applying the `required` / `allowExtras` axes.
+ * When `Required` is `true` the parameters argument is mandatory; otherwise it is optional.
  * @template S - The literal translation string.
- * @template Level - The strictness level. Defaults to `'optional-open'`.
+ * @template Required - Whether all placeholders must be provided. Defaults to `false`.
+ * @template AllowExtras - Whether extra, non-inferred keys are accepted. Defaults to `true`.
  * @template Value - The value type accepted for each placeholder. Defaults to `any`.
  * @template Extractor - The placeholder extractor. Defaults to {@link DoubleBraceExtractor} (`{{...}}`).
  */
 export type PlaceholderTranslation<
     S extends string,
-    Level extends PlaceholderStrictness = 'optional-open',
+    Required extends boolean = false,
+    AllowExtras extends boolean = true,
     Value = any,
     Extractor extends PlaceholderExtractor = DoubleBraceExtractor,
 > = [ApplyPlaceholderExtractor<Extractor, S>] extends [never]
     ? ParameterizedTranslation
-    : IsRequired<Level> extends true
-      ? (params: PlaceholderValues<S, Level, Value, Extractor>) => string
-      : (params?: PlaceholderValues<S, Level, Value, Extractor>) => string;
+    : Required extends true
+      ? (
+            params: PlaceholderValues<
+                S,
+                Required,
+                AllowExtras,
+                Value,
+                Extractor
+            >
+        ) => string
+      : (
+            params?: PlaceholderValues<
+                S,
+                Required,
+                AllowExtras,
+                Value,
+                Extractor
+            >
+        ) => string;
 
 // ---------------------------------------------------------------------------
 // Options bundle (groups the placeholder knobs behind a single generic).
@@ -215,21 +213,56 @@ export type PlaceholderTranslation<
  * translations tree. Grouping them keeps {@link CallableTranslations} at two type
  * arguments (`<T, PPO>`) and leaves room for future options without changing arity.
  * Every field is optional and falls back to the default noted below.
+ *
+ * Prefer building concrete bundles through {@link DefinePlaceholderParams} so editors
+ * autocomplete the option keys.
+ *
+ * @example
+ * type PlaceholderParams = DefinePlaceholderParams<{
+ *     required: false;
+ *     allowExtras: true;
+ * }>;
  */
 export interface PlaceholderParamsOptions {
-    /** Strictness level. See {@link PlaceholderStrictness}. Defaults to `'optional-open'`. */
-    level?: PlaceholderStrictness;
+    /**
+     * Whether all inferred placeholders must be provided.
+     * Defaults to `false` (placeholders may be omitted).
+     */
+    required?: boolean;
+    /**
+     * Whether additional, non-inferred keys are accepted on the params object.
+     * Defaults to `true` (extras allowed).
+     */
+    allowExtras?: boolean;
     /** Value type accepted for each placeholder. Defaults to `any`. */
     value?: unknown;
     /** Placeholder extractor. See {@link PlaceholderExtractor}. Defaults to {@link DoubleBraceExtractor} (`{{...}}`). */
     extractor?: PlaceholderExtractor;
 }
 
-type ResolveLevel<O extends PlaceholderParamsOptions> = O extends {
-    level: infer L extends PlaceholderStrictness;
+/**
+ * Identity helper that keeps the narrow literals you write while constraining keys
+ * to {@link PlaceholderParamsOptions}, so editors suggest `required`, `allowExtras`,
+ * `value` and `extractor` as you type.
+ *
+ * @example
+ * type PlaceholderParams = DefinePlaceholderParams<{
+ *     required: false;
+ *     allowExtras: true;
+ * }>;
+ */
+export type DefinePlaceholderParams<O extends PlaceholderParamsOptions> = O;
+
+type ResolveRequired<O extends PlaceholderParamsOptions> = O extends {
+    required: infer R extends boolean;
 }
-    ? L
-    : 'optional-open';
+    ? R
+    : false;
+type ResolveAllowExtras<O extends PlaceholderParamsOptions> = O extends {
+    allowExtras: infer A extends boolean;
+}
+    ? A
+    : true;
 type ResolveValue<O extends PlaceholderParamsOptions> = O extends {
     value: infer V;
 }
@@ -243,8 +276,9 @@ type ResolveExtractor<O extends PlaceholderParamsOptions> = O extends {
 
 /**
  * Builds the callable translation function for a single translation-string leaf from a
- * {@link PlaceholderParamsOptions} bundle, resolving the level, value type and extractor
- * (each with its default). This is the option-bundle counterpart of {@link PlaceholderTranslation}.
+ * {@link PlaceholderParamsOptions} bundle, resolving `required`, `allowExtras`, value type
+ * and extractor (each with its default). This is the option-bundle counterpart of
+ * {@link PlaceholderTranslation}.
  * @template S - The literal translation string.
  * @template PPO - The {@link PlaceholderParamsOptions} bundle. Defaults to all defaults.
  */
@@ -253,7 +287,8 @@ export type ResolvedPlaceholderTranslation<
     PPO extends PlaceholderParamsOptions = {},
 > = PlaceholderTranslation<
     S,
-    ResolveLevel<PPO>,
+    ResolveRequired<PPO>,
+    ResolveAllowExtras<PPO>,
     ResolveValue<PPO>,
     ResolveExtractor<PPO>
 >;

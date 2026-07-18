@@ -1,5 +1,5 @@
 /**
- * Type-level checks for placeholder-based parameter inference and strictness levels.
+ * Type-level checks for placeholder-based parameter inference and strictness axes.
  *
  * This file is validated by `tsc` (see tsconfig `include: ["src", "tests"]`).
  * It contains no runtime assertions; its purpose is to fail compilation if the
@@ -7,6 +7,7 @@
  */
 import {
     type CallableTranslations,
+    type DefinePlaceholderParams,
     type ExtractDollarBracePlaceholders,
     type ExtractDoubleBracePlaceholders,
     type PlaceholderExtractor,
@@ -42,16 +43,25 @@ type _Dollar = Expect<
     >
 >;
 
-// --- PlaceholderValues: no placeholders stays permissive at every level ----
+// --- PlaceholderValues: no placeholders stays permissive for every combo ----
 
 type _PlaceholderNoneOptional = Expect<
-    Equal<PlaceholderValues<'plain', 'optional-open'>, Record<string, any>>
+    Equal<PlaceholderValues<'plain', false, true>, Record<string, any>>
 >;
 type _PlaceholderNoneRequired = Expect<
-    Equal<PlaceholderValues<'plain', 'required-closed'>, Record<string, any>>
+    Equal<PlaceholderValues<'plain', true, false>, Record<string, any>>
 >;
 
-// --- Strictness levels 1..4 ------------------------------------------------
+// --- DefinePlaceholderParams preserves narrow literals ---------------------
+
+type _Defined = Expect<
+    Equal<
+        DefinePlaceholderParams<{ required: false; allowExtras: true }>,
+        { required: false; allowExtras: true }
+    >
+>;
+
+// --- Strictness axes (required × allowExtras) -------------------------------
 
 type Shape = {
     greeting: 'Welcome {{name}} to {{place}}!';
@@ -61,7 +71,7 @@ type Shape = {
     };
 };
 
-// 'optional-open' (default): optional + extra allowed.
+// default (`required: false`, `allowExtras: true`): optional + extra allowed.
 declare const l1: CallableTranslations<Shape>;
 l1.greeting();
 l1.greeting({ name: 'Ada' });
@@ -70,15 +80,21 @@ l1.greeting({ name: 'Ada', anything: 42 }); // extra allowed
 l1.plain();
 l1.nested.order({ count: 3 });
 
-// 'optional-closed': optional + no extra.
-declare const l2: CallableTranslations<Shape, { level: 'optional-closed' }>;
+// `allowExtras: false`: optional + no extra.
+declare const l2: CallableTranslations<
+    Shape,
+    DefinePlaceholderParams<{ allowExtras: false }>
+>;
 l2.greeting();
 l2.greeting({ name: 'Ada' });
-// @ts-expect-error extra keys are rejected when closed
+// @ts-expect-error extra keys are rejected when allowExtras is false
 l2.greeting({ name: 'Ada', anything: 42 });
 
-// 'required-open': required + extra allowed.
-declare const l3: CallableTranslations<Shape, { level: 'required-open' }>;
+// `required: true`: params required + extra allowed.
+declare const l3: CallableTranslations<
+    Shape,
+    DefinePlaceholderParams<{ required: true }>
+>;
 l3.greeting({ name: 'Ada', place: 'Store' });
 l3.greeting({ name: 'Ada', place: 'Store', anything: 42 }); // extra allowed
 // @ts-expect-error required params cannot be omitted
@@ -86,10 +102,13 @@ l3.greeting();
 // @ts-expect-error missing required 'place'
 l3.greeting({ name: 'Ada' });
 
-// 'required-closed': required + no extra (strictest).
-declare const l4: CallableTranslations<Shape, { level: 'required-closed' }>;
+// `required: true` + `allowExtras: false`: params required + no extra (strictest).
+declare const l4: CallableTranslations<
+    Shape,
+    DefinePlaceholderParams<{ required: true; allowExtras: false }>
+>;
 l4.greeting({ name: 'Ada', place: 'Store' });
-// @ts-expect-error extra keys rejected when closed
+// @ts-expect-error extra keys rejected when allowExtras is false
 l4.greeting({ name: 'Ada', place: 'Store', anything: 42 });
 // @ts-expect-error required params cannot be omitted
 l4.greeting();
@@ -98,7 +117,11 @@ l4.greeting();
 
 declare const strictValues: CallableTranslations<
     { greeting: 'Hello {{name}}' },
-    { level: 'required-closed'; value: string }
+    DefinePlaceholderParams<{
+        required: true;
+        allowExtras: false;
+        value: string;
+    }>
 >;
 strictValues.greeting({ name: 'ok' });
 // @ts-expect-error value must be a string
@@ -112,22 +135,30 @@ interface DollarExtractor extends PlaceholderExtractor {
 
 declare const dollar: CallableTranslations<
     { greeting: 'Hello ${name} from ${place}' },
-    { level: 'required-closed'; extractor: DollarExtractor }
+    DefinePlaceholderParams<{
+        required: true;
+        allowExtras: false;
+        extractor: DollarExtractor;
+    }>
 >;
 dollar.greeting({ name: 'Ada', place: 'Store' });
 // @ts-expect-error required params cannot be omitted with custom extractor
 dollar.greeting();
 
 // `{{...}}` is not recognised by the dollar extractor, so no params are inferred
-// and the function stays permissive even at 'required-closed'.
+// and the function stays permissive even with `required: true`.
 declare const notDollar: CallableTranslations<
     { greeting: 'Hello {{name}}' },
-    { level: 'required-closed'; extractor: DollarExtractor }
+    DefinePlaceholderParams<{
+        required: true;
+        allowExtras: false;
+        extractor: DollarExtractor;
+    }>
 >;
 notDollar.greeting();
 notDollar.greeting({ whatever: 1 });
 
-// --- End-to-end through createCallableTranslations (default level 1) --------
+// --- End-to-end through createCallableTranslations (defaults) --------------
 
 const t = createCallableTranslations(
     {
@@ -140,8 +171,8 @@ const t = createCallableTranslations(
 );
 
 t.greeting({ name: 'Ada', place: 'Store' });
-t.greeting({ name: 'Ada' }); // subset allowed (level 1)
-t.greeting(); // omit allowed (level 1)
-t.greeting({ extra: 1 }); // extra allowed (level 1)
+t.greeting({ name: 'Ada' }); // subset allowed (defaults)
+t.greeting(); // omit allowed (defaults)
+t.greeting({ extra: 1 }); // extra allowed (defaults)
 t.plain();
 t.nested.order({ count: 3 });

@@ -58,7 +58,7 @@ export type ParameterizedTranslation<
  *
  * String leaves have their parameters inferred from template placeholders
  * (`{{name}}` by default), enabling autocomplete. How those parameters behave —
- * strictness level, accepted value type and placeholder syntax — is configured via
+ * `required` / `allowExtras`, accepted value type and placeholder syntax — is configured via
  * the {@link PlaceholderParamsOptions} `Params` bundle (see `./placeholder-params`),
  * which defaults to the built-in behaviour and can be overridden per tag without
  * patching core.
