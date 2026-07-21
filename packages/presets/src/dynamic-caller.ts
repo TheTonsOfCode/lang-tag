@@ -206,3 +206,5 @@ export type CallableTranslationsWithDynamicCaller<
     Recursive,
     TypedKeys
 >;
+
+// Smoke test 2

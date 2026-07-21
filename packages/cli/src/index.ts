@@ -94,4 +94,4 @@ export function createCli() {
 
 createCli().parse();
 
-// Smoke test
+// Smoke test 2
