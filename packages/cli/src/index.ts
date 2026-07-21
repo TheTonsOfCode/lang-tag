@@ -93,5 +93,3 @@ export function createCli() {
 }
 
 createCli().parse();
-
-// Smoke test 2
