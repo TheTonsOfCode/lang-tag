@@ -13,6 +13,12 @@
             "package-name": "lang-tag",
             "release-type": "node",
             "changelog-path": "CHANGELOG.md"
+        },
+        "packages/presets": {
+            "component": "Presets",
+            "package-name": "@lang-tag/presets",
+            "release-type": "node",
+            "changelog-path": "CHANGELOG.md"
         }
     }
 }
