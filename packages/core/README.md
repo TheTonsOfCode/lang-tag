@@ -1,88 +1,227 @@
-# Lang-tag: Component-Colocated Translation Management / Translation Engine Proxy
+# lang-tag
 
-A professional solution for managing translations in modern JavaScript/TypeScript projects, especially those using component-based architectures. `lang-tag` simplifies internationalization by allowing you to define translation keys directly within the components where they are used. Translations become local, callable function objects with full TypeScript support, IntelliSense, and compile-time safety.
+A thin **bridge** between your UI and a translation library (i18next,
+next-intl, …) — or a stand-in while you have not picked one yet.
 
-#### Installation
+You define source text next to the component that uses it. TypeScript
+checks keys and placeholder params. Swap or add an i18n backend later
+without rewriting call sites. Pair with `@lang-tag/cli` and collection
+/ path generation get out of the way fast.
 
-```shell
-npm i lang-tag
-npm i -D @lang-tag/cli
+Set up once, and day to day a developer only writes English in that
+same component — no hand-editing `namespace.json` or hunting keys in
+locale trees. The CLI (locally or in CI/CD) collects the messages;
+another tool can fan them out to the other languages.
+
+Runtime stays tiny (~1KB —
+[Bundlephobia](https://bundlephobia.com/package/lang-tag)). The CLI
+never ships in the app bundle.
+
+## Install
+
+```bash
+npm install lang-tag
+npm install -D @lang-tag/cli
 ```
 
-## Key Benefits
+Optional helpers: `@lang-tag/presets`.
 
-### Lightweight Core (~1KB)
+## Overview
 
-The core is optimized for performance, with a bundle size of just **~1KB** ([check on Bundlephobia](https://bundlephobia.com/package/lang-tag)). It provides essential TypeScript types and minimal utilities to help you build a custom `lang-tag` setup tailored to your project.
+You own a small **tag function** (e.g. `lang` / `i18n`) built with
+`createCallableTranslations`. Tags turn a nested object of strings into
+callable functions. Wire `transform` to your library — or interpolate
+locally until you decide.
 
-- **Component-local translations** – define translations directly within components, avoiding scattered key structures
-- **Light structure, full control** – only the translation object shape is enforced; naming, config, functions, and libraries are all up to you
-- **Flexible library support** – integrate third-party packages effortlessly, with support for both classic mappings and fully customized `lang-tag` flows
+```ts
+import { createCallableTranslations } from 'lang-tag';
 
-### Effortless translation structure
-
-Instead of manually managing centralized translation files, `lang-tag` lets you colocate keys within components and automatically organizes them into namespaces based on your project structure. For example, all components in `components/orders` or pages in `pages/order` share the `orders` namespace. You define a simple folder-to-namespace mapping once, and `lang-tag` handles merging and file organization—while you retain full control over how namespaces are merged.
-
-> Set your rules, then let `lang-tag` do the rest.
-
-### Advanced CLI
-
-Full functionality is available through an advanced CLI that keeps your application bundle size untouched:
-
-- **Automatic translation collection** – `lang-tag collect` scans your project for translation tags and aggregates them into organized JSON files (e.g., `public/locales/en/common.json`), based on your configuration
-- **Dynamic configuration updates** – `lang-tag regenerate-tags` automatically refreshes translation settings in your code, using rules defined in your configuration (e.g., mapping namespaces based on folder structure)
-- **Third-party translation import** – `lang-tag import` detects and integrates translations from external libraries, adapting them to your project’s translation system
-- **Watch mode** – `lang-tag watch` monitors your source files for changes and automatically re-collects/re-generates translations when needed
-
-### Practical and Flexible Architecture
-
-The solution provides:
-
-- **Framework agnostic** – works with any JavaScript/TypeScript project and integrates easily with libraries like react-i18next
-- **Library ecosystem support** - create reusable component libraries with embedded lang-tag translations that consuming lang-tag applications can easily import/integrate and override
-- **Full TypeScript support** - complete type safety with IntelliSense for all translation keys and interpolation parameters
-- **Flexible integration** - seamlessly integrates with existing i18n libraries (i18next, react-i18next) while maintaining your current translation workflow
-- **Automation-first** - comprehensive CLI tools for collection, import, regeneration, and watch modes to streamline the entire translation workflow
-
-## Core Concept
-
-`lang-tag` allows translation management by enabling component-colocated translation definitions. This approach eliminates the traditional complexity of managing distributed translation files and hierarchical key structures, allowing developers to define translations directly where they are consumed.
-
-### Component-Colocated Translation Pattern
-
-Instead of maintaining separate translation files and complex key mappings, translations are defined inline within components:
-
-```tsx
-// Component with colocated translations using custom i18n tag
-import { i18n } from '../utils/i18n';
-
-const translations = i18n(
-    {
-        greeting: 'Welcome {{name}} to our store!',
-        orderSummary: 'You have {{count}} items in your cart.',
-        actions: {
-            proceed: 'Proceed to Payment',
-            cancel: 'Cancel Order',
-        },
-    },
-    {
-        namespace: 'orders',
-        path: 'components.checkout',
-    }
-);
-
-function CheckoutComponent({ name, count }) {
-    const t = translations.useT();
-
-    return (
-        <div>
-            <h2>{t.greeting({ name })}</h2>
-            <p>{t.orderSummary({ count })}</p>
-            <div>
-                <button>{t.actions.proceed()}</button>
-                <button>{t.actions.cancel()}</button>
-            </div>
-        </div>
-    );
+export function lang<const T extends Record<string, any>>(
+    translations: T,
+    config?: { namespace?: string; path?: string }
+) {
+    return {
+        server: () =>
+            createCallableTranslations(translations, config, {
+                transform: ({ value, path, params }) => {
+                    // today: local source / your own interpolator
+                    // later: t(path, params) from i18next / next-intl / …
+                    return value.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key) =>
+                        String(params?.[key] ?? '')
+                    );
+                },
+            }),
+    };
 }
 ```
+
+```tsx
+const checkoutTranslations = lang(
+    {
+        greeting: 'Welcome {{name}}!',
+        actions: {
+            pay: 'Pay now',
+            cancel: 'Cancel',
+        },
+    },
+    { namespace: 'orders', path: 'checkout' }
+);
+
+const t = checkoutTranslations.server();
+t.greeting({ name: 'Ada' }); // typed params
+t.actions.pay();
+```
+
+Scaffold a full tag with `lang-tag init-tag` (React / client / server
+variants included).
+
+## Why use it
+
+1. **Bridge, not a lock-in** — same call sites whether you use a library
+   today or plug one in later; refactoring the backend stays cheap.
+2. **Type translations top to bottom** — force every enum/key to have a
+   message, require every placeholder, reject extras — all via the types
+   _you_ configure (no ESLint i18n plugins, no extra lint stack).
+3. **One toolchain** — TypeScript + `@lang-tag/cli` catch missing keys,
+   bad tags, and collect conflicts; CI can regenerate, collect, then hand
+   English off to any translator for the other locales.
+4. Source text lives next to the UI that needs it.
+5. Libraries can ship tags that apps import and override.
+
+## End-to-end typing
+
+You control how strict things are. With `as const` + `satisfies` (or a
+generic on the tag), TypeScript can require a full map for an enum /
+union — missing or extra keys fail at compile time:
+
+```ts
+type Status = 'pending' | 'done' | 'failed';
+
+export const statusTranslations = lang(
+    {
+        pending: 'Pending',
+        done: 'Done',
+        failed: 'Failed',
+        // missing `failed` → type error
+        // typo key → type error
+    } as const satisfies Record<Status, string>,
+    { namespace: 'common', path: 'status' }
+);
+```
+
+Placeholders follow the same idea. Configure `DefinePlaceholderParams`
+(from `lang-tag`) so callers must pass every inferred name, or may omit
+them, or may not pass unknown keys — whatever your project types ask for:
+
+```ts
+import type { DefinePlaceholderParams } from 'lang-tag';
+
+type PlaceholderParams = DefinePlaceholderParams<{
+    required: true; // must pass params when the string has placeholders
+    allowExtras: false; // reject { name, unexpected: … }
+}>;
+
+// with required: true
+t.greeting({ name: 'Ada' }); // ok
+t.greeting(); // type error
+```
+
+How far this goes is up to the types you prepare on the tag. The point:
+one library + TypeScript covers the surface — not a zoo of ESLint
+plugins.
+
+Together with the CLI in CI (`regenerate-tags` → `collect` → your
+translate tool), you also catch invalid tags, path conflicts, and
+missing collected English before another tool fans out to other
+languages (namespace files or a single dictionary — your collector
+choice).
+
+## Placeholders
+
+Any placeholder syntax can be typed. Default is `{{ name }}`
+(`DoubleBraceExtractor`). Ready-mades you can reuse as-is:
+
+| Extractor                 | Syntax       |
+| ------------------------- | ------------ |
+| `DoubleBraceExtractor`    | `{{ name }}` |
+| `DollarBraceExtractor`    | `${ name }`  |
+| `SingleBraceExtractor`    | `{ name }`   |
+| `PercentBraceExtractor`   | `%{ name }`  |
+| `PercentPercentExtractor` | `%name%`     |
+| `ColonExtractor`          | `:name`      |
+| `DollarIdentExtractor`    | `$name`      |
+| `AngleBracketExtractor`   | `<name>`     |
+| `DoubleSquareExtractor`   | `[[ name ]]` |
+| `SingleSquareExtractor`   | `[ name ]`   |
+
+Or write your own in a few lines: a recursive string type that pulls
+names out of the template, plus an interface that plugs it into
+`DefinePlaceholderParams`:
+
+```ts
+import type {
+    DefinePlaceholderParams,
+    PlaceholderExtractor,
+    Trim,
+} from 'lang-tag';
+
+// 1) Parse your syntax — here: !name!
+type ExtractBang<S extends string> =
+    S extends `${string}!${infer Name}!${infer Rest}`
+        ? Trim<Name> | ExtractBang<Rest>
+        : never;
+
+// 2) Expose it as a PlaceholderExtractor (same shape as the built-ins)
+interface BangExtractor extends PlaceholderExtractor {
+    placeholders: ExtractBang<this['template']>;
+}
+
+// 3) Wire it into the tag's placeholder options
+type PlaceholderParams = DefinePlaceholderParams<{
+    extractor: BangExtractor;
+    required: true;
+}>;
+```
+
+`Hello !name!` then infers `{ name: … }` on the call site. Keep runtime
+replacement in sync in your tag `transform` (or a preset).
+
+| Option        | Role                                    |
+| ------------- | --------------------------------------- |
+| `required`    | Params required when placeholders exist |
+| `allowExtras` | Allow extra keys beyond inferred names  |
+| `extractor`   | How names are parsed out of the message |
+
+Typing is compile-time only. Runtime replacement is **your**
+`transform` (or `@lang-tag/presets` for React nodes).
+
+## Important APIs
+
+| Export                       | Purpose                                       |
+| ---------------------------- | --------------------------------------------- |
+| `createCallableTranslations` | Object of strings → nested callable functions |
+| `lookupTranslation`          | Resolve a function by path segments           |
+| `FlexibleTranslations` / …   | Types for partial / flexible translation maps |
+| `DefinePlaceholderParams`    | Configure placeholder inference               |
+
+## Guidelines
+
+1. Pass an **object literal** as the first tag argument — variables are
+   not collected by the CLI.
+2. Use `as const satisfies Record<Key, string>` (or equivalent) when a
+   closed set of keys must be fully translated.
+3. Tune `required` / `allowExtras` / `extractor` to match how strict
+   call sites should be.
+4. Keep reusable domain maps (statuses, roles) in shared tag files.
+5. Translate full sentences; use placeholders for values and nodes.
+
+## See also
+
+- [`@lang-tag/cli`](https://www.npmjs.com/package/@lang-tag/cli) — collect, regenerate, import
+- [`@lang-tag/presets`](https://www.npmjs.com/package/@lang-tag/presets) — dynamic caller, React placeholders
+- [Docs](https://github.com/TheTonsOfCode/lang-tag/blob/main/docs/packages/core.md)
+- [Changelog](./CHANGELOG.md)
+
+## License
+
+MIT
