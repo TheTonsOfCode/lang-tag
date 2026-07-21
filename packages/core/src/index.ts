@@ -6,3 +6,4 @@ export * from './lookup';
 
 // TODO: variables from string
 // TODO: value processor functions
+// Smoke test
