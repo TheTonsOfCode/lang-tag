@@ -1,105 +1,22 @@
+import type {
+    ApplyPlaceholderExtractor,
+    DoubleBraceExtractor,
+    PlaceholderExtractor,
+} from './placeholders-extractors';
 import type { InterpolationParams, ParameterizedTranslation } from './types';
 
 /**
  * Placeholder parameter inference.
  * ================================
  *
- * This file owns everything related to turning a translation string with `{{ name }}`
- * placeholders into a typed parameters object. It is intentionally decoupled from the
- * rest of the core so that:
+ * Turns a translation string with placeholders into a typed parameters object.
+ * Extractors live in {@link ./placeholders-extractors} — reuse a built-in or
+ * plug in your own via {@link PlaceholderExtractor}.
  *
- *   1. `lang-tag` supports the `{{ name }}` placeholder syntax out of the box
- *      (see {@link DoubleBraceExtractor}), and
- *   2. consumers who need a different placeholder syntax (e.g. `${name}`) can
- *      plug in their own extractor via the {@link PlaceholderExtractor} higher-kinded
- *      interface — without patching core.
- *
- * Nothing here is strictly enforced at runtime: placeholder replacement happens
- * in the generated tag (`processPlaceholders`), which the consumer owns. These
- * types only drive editor autocomplete and compile-time parameter checking.
+ * Nothing here is enforced at runtime: replacement happens in the tag
+ * (`processPlaceholders` / your `transform`). These types only drive
+ * autocomplete and compile-time checks.
  */
-
-// ---------------------------------------------------------------------------
-// String trimming helpers (placeholder names may contain surrounding spaces).
-// ---------------------------------------------------------------------------
-
-/** Whitespace characters trimmed from placeholder names. */
-type Whitespace = ' ' | '\n' | '\t' | '\r';
-type TrimLeft<S extends string> = S extends `${Whitespace}${infer R}`
-    ? TrimLeft<R>
-    : S;
-type TrimRight<S extends string> = S extends `${infer R}${Whitespace}`
-    ? TrimRight<R>
-    : S;
-/** Removes leading/trailing whitespace from a string literal type. */
-export type Trim<S extends string> = TrimLeft<TrimRight<S>>;
-
-// ---------------------------------------------------------------------------
-// Placeholder extractors (the pieces that are meant to be swappable).
-// ---------------------------------------------------------------------------
-
-/**
- * Extracts the union of placeholder names from a `{{ name }}` translation string.
- * This is the default syntax supported by `lang-tag`.
- * Resolves to `never` when the string contains no placeholders.
- * @example ExtractDoubleBracePlaceholders<'Hello {{name}} from {{ sender }}'> // 'name' | 'sender'
- */
-export type ExtractDoubleBracePlaceholders<S extends string> =
-    S extends `${string}{{${infer Placeholder}}}${infer Rest}`
-        ? Trim<Placeholder> | ExtractDoubleBracePlaceholders<Rest>
-        : never;
-
-/**
- * Extracts the union of placeholder names from a `${ name }` translation string.
- * Provided as a ready-made alternative to {@link ExtractDoubleBracePlaceholders} for
- * consumers who prefer the `${...}` syntax. Wire it up through {@link DollarBraceExtractor}.
- * @example ExtractDollarBracePlaceholders<'Hello ${name}'> // 'name'
- */
-export type ExtractDollarBracePlaceholders<S extends string> =
-    S extends `${string}${'${'}${infer Placeholder}}${infer Rest}`
-        ? Trim<Placeholder> | ExtractDollarBracePlaceholders<Rest>
-        : never;
-
-// ---------------------------------------------------------------------------
-// Higher-kinded extractor interface (allows overriding without touching core).
-// ---------------------------------------------------------------------------
-
-/**
- * Higher-kinded interface describing a placeholder extractor.
- *
- * An implementation extends this interface and computes {@link PlaceholderExtractor.placeholders}
- * from {@link PlaceholderExtractor.template}. The template is injected by
- * {@link ApplyPlaceholderExtractor}; implementations read it via `this['template']`.
- *
- * @example
- * // Custom `${...}` extractor in your own project:
- * interface MyDollarExtractor extends PlaceholderExtractor {
- *     placeholders: ExtractDollarBracePlaceholders<this['template']>;
- * }
- * // then: CallableTranslations<T, { extractor: MyDollarExtractor }>
- */
-export interface PlaceholderExtractor {
-    /** The translation string to analyse (injected by {@link ApplyPlaceholderExtractor}). */
-    readonly template: string;
-    /** The resulting union of placeholder names. */
-    readonly placeholders: string;
-}
-
-/** Applies a {@link PlaceholderExtractor} to a concrete translation string. */
-export type ApplyPlaceholderExtractor<
-    Extractor extends PlaceholderExtractor,
-    S extends string,
-> = (Extractor & { readonly template: S })['placeholders'];
-
-/** Default extractor: the built-in `{{ name }}` syntax. */
-export interface DoubleBraceExtractor extends PlaceholderExtractor {
-    readonly placeholders: ExtractDoubleBracePlaceholders<this['template']>;
-}
-
-/** Ready-made extractor for the `${ name }` syntax. */
-export interface DollarBraceExtractor extends PlaceholderExtractor {
-    readonly placeholders: ExtractDollarBracePlaceholders<this['template']>;
-}
 
 // ---------------------------------------------------------------------------
 // Strictness axes (`required` × `allowExtras`).
