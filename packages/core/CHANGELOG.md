@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.2](https://github.com/TheTonsOfCode/lang-tag/compare/Core-v0.14.1...Core-v0.14.2) (2026-07-21)
+
+
+### Bug Fixes
+
+* smoke test 2 ([9fb9dfe](https://github.com/TheTonsOfCode/lang-tag/commit/9fb9dfe0bfae0eaa24e8fc19dddc18cfc2c66472))
+
 ## [0.14.1](https://github.com/TheTonsOfCode/lang-tag/compare/Core-v0.14.0...Core-v0.14.1) (2026-07-21)
 
 
