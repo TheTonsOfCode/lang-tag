@@ -2293,3 +2293,65 @@ describe('Replace tags with NULL config and translationArgPosition 2', () => {
         expect(tag1.parameterConfig).toEqual({});
     });
 });
+
+describe('multiple tag names', () => {
+    const multiProcessor = new $LT_TagProcessor({
+        tagName: ['lang', 't', 'i18n'],
+        translationArgPosition: 1,
+    });
+
+    it('should find tags using any configured alternative name', () => {
+        const content = `
+            const a = lang({ key: 'a' });
+            const b = t({ key: 'b' });
+            i18n({ key: 'c' });
+        `;
+
+        const tags = multiProcessor.extractTags(content);
+
+        expect(tags).toHaveLength(3);
+        expect(tags.map((tag) => tag.tagName)).toEqual(['lang', 't', 'i18n']);
+        expect(tags.map((tag) => tag.parameterTranslations.key)).toEqual([
+            'a',
+            'b',
+            'c',
+        ]);
+    });
+
+    it('should preserve the original tag name when replacing', () => {
+        const content =
+            "const text = t({ key: 'hello' }, { namespace: 'common' });";
+        const tags = multiProcessor.extractTags(content);
+
+        expect(tags).toHaveLength(1);
+        expect(tags[0].tagName).toBe('t');
+
+        const result = multiProcessor.replaceTags(content, [
+            {
+                tag: tags[0],
+                config: { namespace: 'common', path: 'greeting' },
+            },
+        ]);
+
+        expect(result).toContain("t({ key: 'hello' }");
+        expect(result).not.toContain('lang(');
+
+        const replacedTags = multiProcessor.extractTags(result);
+        expect(replacedTags[0].tagName).toBe('t');
+        expect(replacedTags[0].parameterConfig.path).toBe('greeting');
+    });
+
+    it('should prefer longer tag names over shorter prefixes', () => {
+        const processor = new $LT_TagProcessor({
+            tagName: ['lang', 'language'],
+            translationArgPosition: 1,
+        });
+
+        const content = "language({ key: 'hello' }); lang({ key: 'hi' });";
+        const tags = processor.extractTags(content);
+
+        expect(tags).toHaveLength(2);
+        expect(tags[0].tagName).toBe('language');
+        expect(tags[1].tagName).toBe('lang');
+    });
+});

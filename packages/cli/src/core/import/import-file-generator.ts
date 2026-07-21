@@ -9,6 +9,7 @@ import { resolve } from 'pathe';
 import { fileURLToPath } from 'url';
 
 import { $LT_EnsureDirectoryExists } from '@/core/io/file';
+import { getPrimaryTagName } from '@/core/tag-name';
 import { formatFileUrlForDisplay } from '@/core/utils';
 import { LangTagCLILogger } from '@/logger';
 import {
@@ -70,7 +71,7 @@ export async function generateImportFiles(
                     : null,
                 hasParameter2,
                 config: {
-                    tagName: config.tagName,
+                    tagName: getPrimaryTagName(config.tagName),
                 },
             };
         });

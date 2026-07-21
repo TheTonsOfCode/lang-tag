@@ -4,6 +4,11 @@ import { pathToFileURL } from 'url';
 
 import { CONFIG_FILE_NAME } from '@/core/constants';
 import { LANG_TAG_DEFAULT_CONFIG } from '@/core/default-config';
+import {
+    applyLibraryTagPrefixToConfig,
+    isReservedTagName,
+    normalizeTagNames,
+} from '@/core/tag-name';
 import { LangTagCLIConfig } from '@/type';
 
 export async function $LT_ReadConfig(
@@ -28,15 +33,13 @@ export async function $LT_ReadConfig(
         const userConfig: Partial<LangTagCLIConfig> =
             configModule.default || {};
 
-        const tn = (userConfig.tagName || '')
-            .toLowerCase()
-            .replace(/[-_\s]/g, '');
-
         // Block exact matches for "lang-tag" and "langtag"
-        if (tn === 'langtag' || tn === 'lang-tag') {
-            throw new Error(
-                'Custom tagName cannot be "lang-tag" or "langtag"! (It is not recommended for use with libraries)\n'
-            );
+        for (const name of normalizeTagNames(userConfig.tagName)) {
+            if (isReservedTagName(name)) {
+                throw new Error(
+                    'Custom tagName cannot be "lang-tag" or "langtag"! (It is not recommended for use with libraries)\n'
+                );
+            }
         }
 
         const config = {
@@ -56,14 +59,22 @@ export async function $LT_ReadConfig(
             throw new Error('Collector not found! (config.collect.collector)');
         }
 
+        if (
+            Array.isArray(config.tagName) &&
+            normalizeTagNames(config.tagName).length === 0
+        ) {
+            throw new Error(
+                'tagName must be a non-empty string or array of strings'
+            );
+        }
+
         // Automatically add "_" prefix to tagName for libraries if enforceLibraryTagPrefix is enabled
         if (
             config.isLibrary &&
             (config.enforceLibraryTagPrefix ?? true) &&
-            config.tagName &&
-            !config.tagName.startsWith('_')
+            config.tagName
         ) {
-            config.tagName = `_${config.tagName}`;
+            config.tagName = applyLibraryTagPrefixToConfig(config.tagName);
         }
 
         return config;

@@ -6,10 +6,15 @@ import { LangTagCLILogger } from './logger';
 
 export interface LangTagCLIConfig {
     /**
-     * Tag name used to mark translations in code.
+     * Tag name(s) used to mark translations in code.
+     * Accepts a single name or a list of alternatives to scan for.
+     * When a list is provided, the first entry is the primary name
+     * (used for init/import); all entries are matched while collecting.
      * @default 'lang'
+     * @example 'lang'
+     * @example ['lang', 't', 'i18n']
      */
-    tagName: string;
+    tagName: string | string[];
 
     /**
      * Glob patterns specifying directories/files to include when searching for translations.
@@ -51,13 +56,16 @@ export interface LangTagCLIConfig {
 
     /**
      * When true and isLibrary is true, automatically adds "_" prefix to tagName
-     * to prevent the tag from being suggested in TypeScript autocomplete after compilation.
+     * (each name when tagName is a list) to prevent the tag from being suggested
+     * in TypeScript autocomplete after compilation.
      * This ensures that library tags remain internal and are not exposed in .d.ts files.
      * @default true
      * @example
      * // With enforceLibraryTagPrefix: true and tagName: "lang"
      * // Generated tag function will be: export function _lang(...)
      * // Config tagName also will be automatically set to "_lang"
+     * @example
+     * // With tagName: ["lang", "t"] → ["_lang", "_t"]
      */
     enforceLibraryTagPrefix?: boolean;
 
@@ -194,6 +202,9 @@ type Validity =
 
 export interface LangTagCLIProcessedTag {
     fullMatch: string;
+
+    /** The tag function name that was matched (one of config.tagName alternatives). */
+    tagName: string;
 
     parameter1Text: string;
     parameter2Text?: string;

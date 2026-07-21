@@ -49,7 +49,7 @@ const keeper = configKeeper({ propertyName: 'keep' });
 /** @type {import('@lang-tag/cli/type').LangTagCLIConfig} */
 const config = {
 {{#needsTagName}}
-    tagName: '{{tagName}}',
+    tagName: '{{tagName}}', // or ['lang', 'i18n'] for multiple alternatives
 {{/needsTagName}}
 {{#isLibrary}}
     isLibrary: true,

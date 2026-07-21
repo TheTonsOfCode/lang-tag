@@ -2,6 +2,8 @@ import { existsSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { join } from 'path';
 
+import { getPrimaryTagName } from '@/core/tag-name';
+
 import { InitTagRenderOptions } from './renderer';
 
 export interface InitTagOptions {
@@ -14,7 +16,7 @@ export interface InitTagOptions {
 
 interface Config {
     isLibrary: boolean;
-    tagName: string;
+    tagName: string | string[];
     enforceLibraryTagPrefix?: boolean;
 }
 
@@ -71,7 +73,7 @@ export async function detectInitTagOptions(
     const isLibrary =
         options.library !== undefined ? options.library : config.isLibrary;
 
-    let tagName = options.name || config.tagName || 'lang';
+    let tagName = options.name || getPrimaryTagName(config.tagName) || 'lang';
 
     // Add "_" prefix for libraries if enforceLibraryTagPrefix is enabled
     if (

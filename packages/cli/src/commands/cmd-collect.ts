@@ -2,6 +2,7 @@ import { $LT_CollectCandidateFilesWithTags } from '@/core/collect/collect-tags';
 import { $LT_GroupTagsToCollections } from '@/core/collect/group-tags-to-collections';
 import { $LT_WriteAsExportFile } from '@/core/io/write-as-export-file';
 import { $LT_WriteToCollections } from '@/core/io/write-to-collections';
+import { getPrimaryTagName } from '@/core/tag-name';
 import { formatExecutionTime } from '@/core/utils';
 
 import { $LT_GetCommandEssentials } from './setup';
@@ -34,9 +35,10 @@ export async function $LT_CMD_Collect(options?: { clean?: boolean }) {
             (config.enforceLibraryTagPrefix ?? true) &&
             config.tagName
         ) {
-            const baseTagName = config.tagName.startsWith('_')
-                ? config.tagName.substring(1)
-                : config.tagName;
+            const primaryTagName = getPrimaryTagName(config.tagName);
+            const baseTagName = primaryTagName.startsWith('_')
+                ? primaryTagName.substring(1)
+                : primaryTagName;
             console.log('');
             logger.warn(
                 '⚠️  No translation tags found in your library code.\n' +

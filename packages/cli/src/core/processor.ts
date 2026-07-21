@@ -1,5 +1,6 @@
 import JSON5 from 'json5';
 
+import { buildTagNameAlternation } from '@/core/tag-name';
 import { LangTagCLIConfig, LangTagCLIProcessedTag } from '@/type';
 
 export interface $LT_TagReplaceData {
@@ -18,7 +19,7 @@ export class $LT_TagProcessor {
     ) {}
 
     public extractTags(fileContent: string): LangTagCLIProcessedTag[] {
-        const tagName = this.config.tagName;
+        const tagNameAlternation = buildTagNameAlternation(this.config.tagName);
         const optionalVariableAssignment = `(?:\\s*(\\w+)\\s*=\\s*)?`;
 
         // Find all potential lang tag matches
@@ -29,9 +30,9 @@ export class $LT_TagProcessor {
         const skipRanges = this.buildSkipRanges(fileContent);
 
         // Create a regex to find the start of a lang tag (with or without generic type)
-        // First match the tag name, then check for generic type
+        // First match the tag name (any configured alternative), then check for generic type
         const tagNamePattern = new RegExp(
-            `${optionalVariableAssignment}${tagName}`,
+            `${optionalVariableAssignment}(${tagNameAlternation})`,
             'g'
         );
 
@@ -44,6 +45,7 @@ export class $LT_TagProcessor {
 
             const tagNameStartIndex = tagNameMatch.index;
             const variableName = tagNameMatch[1] || undefined;
+            const matchedTagName = tagNameMatch[2];
 
             // Check if this match is inside a comment or string literal
             if (this.isInSkipRange(tagNameStartIndex, skipRanges)) {
@@ -417,6 +419,7 @@ export class $LT_TagProcessor {
 
             matches.push({
                 fullMatch,
+                tagName: matchedTagName,
                 variableName,
                 genericType,
                 satisfiesType,
@@ -525,7 +528,8 @@ export class $LT_TagProcessor {
                 ? `<${tag.genericType}>`
                 : '';
 
-            let tagFunction = `${this.config.tagName}${genericTypePart}(${arg1}${arg1TypeSuffix}`;
+            // Preserve the original matched tag name (important when config.tagName is a list)
+            let tagFunction = `${tag.tagName}${genericTypePart}(${arg1}${arg1TypeSuffix}`;
             if (arg2) tagFunction += `, ${arg2}${arg2TypeSuffix}`;
             tagFunction += ')';
 

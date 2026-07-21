@@ -50,6 +50,7 @@ describe('$LT_GroupTagsToNamespaces - ignoreConflictsWithMatchingValues', () => 
     ): LangTagCLIProcessedTag => ({
         fullMatch:
             'lang({ text: "Hello" }, { path: "test.path", namespace: "common" })',
+        tagName: 'lang',
         parameter1Text: '{ text: "Hello" }',
         parameter2Text: '{ path: "test.path", namespace: "common" }',
         parameterTranslations: { text: 'Hello' },
