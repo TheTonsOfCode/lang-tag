@@ -2,19 +2,24 @@
 
 ## [0.0.4](https://github.com/TheTonsOfCode/lang-tag/compare/Presets-v0.0.3...Presets-v0.0.4) (2026-07-21)
 
+### Miscellaneous
 
-### Bug Fixes
+- Release pipeline verification — no functional changes.
 
-* smoke test 2 ([9fb9dfe](https://github.com/TheTonsOfCode/lang-tag/commit/9fb9dfe0bfae0eaa24e8fc19dddc18cfc2c66472))
+## [0.0.3](https://github.com/TheTonsOfCode/lang-tag/compare/Presets-v0.0.2...Presets-v0.0.3) (2026-07-16)
 
-## [1.0.1](https://github.com/TheTonsOfCode/langtag-monorepo-x/compare/Presets-v1.0.0...Presets-v1.0.1) (2025-12-08)
+### Changed
 
-### Bug Fixes
+- `withDynamicCaller` enables `typedKeys` by default ([734d26c](https://github.com/TheTonsOfCode/lang-tag/commit/734d26c5212544d98e45490d08bb168d908e394d))
 
-- preset build ([163403a](https://github.com/TheTonsOfCode/langtag-monorepo-x/commit/163403acdee24109ad3a1eeeffa1dccfcd35453b))
+## [0.0.2](https://github.com/TheTonsOfCode/lang-tag/compare/Presets-v0.0.1...Presets-v0.0.2) (2026-07-10)
 
-## 1.0.0 (2025-12-08)
+### Features
 
-### Bug Fixes
+- Add React placeholder helpers (`react/placeholders`) ([e3be216](https://github.com/TheTonsOfCode/lang-tag/commit/e3be21608ca9527250f681752d9c53cf7e9dd30f))
 
-- **core:** extra logging ([6213160](https://github.com/TheTonsOfCode/langtag-monorepo-x/commit/62131604516175f3390f93bc821615f2f943a1b9))
+## [0.0.1](https://github.com/TheTonsOfCode/lang-tag/compare/Presets-v0.0.0...Presets-v0.0.1) (2026-07-10)
+
+### Features
+
+- Initial release with `withDynamicCaller` ([292edb8](https://github.com/TheTonsOfCode/lang-tag/commit/292edb8536c4791ffcb9f893271cbb851de96b01))
