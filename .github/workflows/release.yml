@@ -8,6 +8,8 @@ on:
 permissions:
     contents: write
     pull-requests: write
+    # Required for npm Trusted Publishing (OIDC)
+    id-token: write
 
 jobs:
     release:
@@ -15,13 +17,13 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
               with:
                   fetch-depth: 0
 
             - name: Run release-please
               id: release
-              uses: googleapis/release-please-action@v4
+              uses: googleapis/release-please-action@v5
               with:
                   token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
                   config-file: .release-please-config.json
@@ -29,11 +31,16 @@ jobs:
 
             - name: Setup Node.js
               if: steps.release.outputs.release_created == 'true' || steps.release.outputs['packages/cli--release_created'] == 'true' || steps.release.outputs['packages/core--release_created'] == 'true' || steps.release.outputs['packages/presets--release_created'] == 'true'
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v7
               with:
-                  node-version: 20
+                  node-version: 24
                   cache: npm
                   registry-url: https://registry.npmjs.org
+
+            # Trusted Publishing (OIDC) requires npm >= 11.5.1
+            - name: Update npm
+              if: steps.release.outputs.release_created == 'true' || steps.release.outputs['packages/cli--release_created'] == 'true' || steps.release.outputs['packages/core--release_created'] == 'true' || steps.release.outputs['packages/presets--release_created'] == 'true'
+              run: npm install -g npm@latest
 
             - name: Install dependencies
               if: steps.release.outputs.release_created == 'true' || steps.release.outputs['packages/cli--release_created'] == 'true' || steps.release.outputs['packages/core--release_created'] == 'true' || steps.release.outputs['packages/presets--release_created'] == 'true'
@@ -41,10 +48,15 @@ jobs:
 
             - name: Publish released packages
               if: steps.release.outputs.release_created == 'true' || steps.release.outputs['packages/cli--release_created'] == 'true' || steps.release.outputs['packages/core--release_created'] == 'true' || steps.release.outputs['packages/presets--release_created'] == 'true'
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
               run: |
-                  [ "${{ steps.release.outputs['packages/cli--release_created'] }}" = "true" ] && npm run publish --workspace @lang-tag/cli || true
-                  [ "${{ steps.release.outputs['packages/core--release_created'] }}" = "true" ] && npm run publish --workspace lang-tag || true
-                  [ "${{ steps.release.outputs['packages/presets--release_created'] }}" = "true" ] && npm run publish --workspace @lang-tag/presets || true
+                  set -e
+                  if [ "${{ steps.release.outputs['packages/cli--release_created'] }}" = "true" ]; then
+                      npm run publish --workspace @lang-tag/cli
+                  fi
+                  if [ "${{ steps.release.outputs['packages/core--release_created'] }}" = "true" ]; then
+                      npm run publish --workspace lang-tag
+                  fi
+                  if [ "${{ steps.release.outputs['packages/presets--release_created'] }}" = "true" ]; then
+                      npm run publish --workspace @lang-tag/presets
+                  fi
 

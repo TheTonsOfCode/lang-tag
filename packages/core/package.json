@@ -9,6 +9,9 @@
     },
     "author": "TheTonsOfCode",
     "license": "MIT",
+    "engines": {
+        "node": ">=22"
+    },
     "main": "./index.cjs",
     "module": "./index.js",
     "types": "./dist/index.d.ts",

@@ -8,6 +8,9 @@
     },
     "author": "TheTonsOfCode",
     "license": "MIT",
+    "engines": {
+        "node": ">=22"
+    },
     "exports": {
         "./*": {
             "types": "./dist/*.d.ts",

@@ -46,7 +46,7 @@ sequenceDiagram
     RP->>GA: *--release_created outputs
     GA->>GA: setup Node, npm ci
     GA->>GA: publish.sh for released packages only
-    GA->>NPM: npm publish (NPM_TOKEN)
+    GA->>NPM: npm publish (OIDC / Trusted Publishing)
 ```
 
 Each package has `publish.sh` → `build.sh` → `npm publish` from `dist/`.
