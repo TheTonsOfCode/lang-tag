@@ -60,8 +60,20 @@ type _PercentPercent = Expect<
     Equal<ExtractPercentPercentPlaceholders<'Hello %name%'>, 'name'>
 >;
 type _Colon = Expect<Equal<ExtractColonPlaceholders<'Hello :name!'>, 'name'>>;
+type _ColonSnakeKebab = Expect<
+    Equal<
+        ExtractColonPlaceholders<'Hi :user_id / :order-id'>,
+        'user_id' | 'order-id'
+    >
+>;
+type _ColonRejectsLeadingDigit = Expect<
+    Equal<ExtractColonPlaceholders<'x :1abc y'>, never>
+>;
 type _DollarIdent = Expect<
     Equal<ExtractDollarIdentPlaceholders<'Hi $name and ${ignored}'>, 'name'>
+>;
+type _DollarIdentSnake = Expect<
+    Equal<ExtractDollarIdentPlaceholders<'Hi $user_id!'>, 'user_id'>
 >;
 type _Angle = Expect<
     Equal<ExtractAngleBracketPlaceholders<'Hello <name>'>, 'name'>

@@ -47,43 +47,45 @@ type TrimRight<S extends string> = S extends `${infer R}${Whitespace}`
 /** Removes leading/trailing whitespace from a string literal type. */
 export type Trim<S extends string> = TrimLeft<TrimRight<S>>;
 
-/** Characters that end a `:name` / `$name` style identifier. */
-type IdentStop =
-    | ' '
-    | '\n'
-    | '\t'
-    | '\r'
-    | '.'
-    | ','
-    | '!'
-    | '?'
-    | ';'
-    | ':'
-    | '/'
-    | '\\'
-    | "'"
-    | '"'
-    | '('
-    | ')'
-    | '['
-    | ']'
-    | '{'
-    | '}'
-    | '<'
-    | '>'
-    | '%'
-    | '@'
-    | '|';
+/**
+ * Character union from a string literal (type-level).
+ * @example CharactersOf<'ab'> // 'a' | 'b'
+ */
+type CharactersOf<S extends string> = S extends `${infer First}${infer Rest}`
+    ? First | CharactersOf<Rest>
+    : never;
 
-/** Consumes an identifier prefix from `S` (stops at {@link IdentStop} or end). */
-type TakeIdent<
-    S extends string,
-    Acc extends string = '',
-> = S extends `${infer C}${infer Rest}`
-    ? C extends IdentStop
-        ? Acc
-        : TakeIdent<Rest, `${Acc}${C}`>
-    : Acc;
+type AlphaLower = CharactersOf<'abcdefghijklmnopqrstuvwxyz'>;
+type Alpha = AlphaLower | Uppercase<AlphaLower>;
+type Numeric = CharactersOf<'0123456789'>;
+
+/**
+ * First character of a `:name` / `$name` identifier: `^[a-zA-Z_]`.
+ * Deliberate allow-list (ASCII) — not a deny-list of separators.
+ */
+type IdentStart = Alpha | '_';
+
+/**
+ * Continuation characters: `^[a-zA-Z0-9_-]*` after {@link IdentStart}.
+ * Full shape: `^[a-zA-Z_][a-zA-Z0-9_-]*$`.
+ */
+type IdentContinue = IdentStart | Numeric | '-';
+
+/**
+ * Consumes an identifier prefix from `S` matching
+ * `^[a-zA-Z_][a-zA-Z0-9_-]*$`. Stops at the first non-matching character.
+ */
+type TakeIdent<S extends string, Acc extends string = ''> = Acc extends ''
+    ? S extends `${infer C}${infer Rest}`
+        ? C extends IdentStart
+            ? TakeIdent<Rest, C>
+            : ''
+        : ''
+    : S extends `${infer C}${infer Rest}`
+      ? C extends IdentContinue
+          ? TakeIdent<Rest, `${Acc}${C}`>
+          : Acc
+      : Acc;
 
 // ---------------------------------------------------------------------------
 // Higher-kinded extractor interface
@@ -192,8 +194,10 @@ export interface PercentPercentExtractor extends PlaceholderExtractor {
 }
 
 /**
- * `:name` — Express / route-style placeholders (identifier until punctuation/space).
+ * `:name` — Express / route-style placeholders.
+ * Name shape: `^[a-zA-Z_][a-zA-Z0-9_-]*$` (ASCII allow-list).
  * @example ExtractColonPlaceholders<'Hello :name!'> // 'name'
+ * @example ExtractColonPlaceholders<'Hi :user_id / :order-id'> // 'user_id' | 'order-id'
  */
 export type ExtractColonPlaceholders<S extends string> =
     S extends `${string}:${infer Rest}`
@@ -213,7 +217,9 @@ export interface ColonExtractor extends PlaceholderExtractor {
 
 /**
  * `$name` — dollar-prefixed identifiers (not `${ name }`).
+ * Name shape: `^[a-zA-Z_][a-zA-Z0-9_-]*$` (ASCII allow-list).
  * @example ExtractDollarIdentPlaceholders<'Hello $name'> // 'name'
+ * @example ExtractDollarIdentPlaceholders<'Hi $user_id'> // 'user_id'
  */
 export type ExtractDollarIdentPlaceholders<S extends string> =
     S extends `${string}$${infer Rest}`
