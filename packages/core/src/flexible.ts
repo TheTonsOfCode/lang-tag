@@ -1,3 +1,4 @@
+import { LangTagSpecialFn, isLangTagSpecial } from './special';
 import {
     CallableTranslations,
     InterpolationParams,
@@ -27,17 +28,29 @@ type FlexibleValue<T, IsPartial extends boolean> = T extends (
  * can be its original type, a string, or a `ParameterizedTranslation` function.
  * If `IsPartial` is true, all properties at all levels of nesting become optional.
  *
+ * String-index (`Record`) schemas also accept {@link LangTagSpecialFn}
+ * so a branded special (`$`, future `plural` / `count`) stays assignable.
+ *
  * @template T The original, un-transformed, structure of the translations.
  * @template IsPartial A boolean indicating whether properties should be optional.
  *   If true, all properties at all levels become optional (e.g., `string | undefined`).
  *   If false, properties are required (e.g., `string`).
  */
+
 export type RecursiveFlexibleTranslations<
     T,
     IsPartial extends boolean,
 > = IsPartial extends true
-    ? { [P in keyof T]?: FlexibleValue<T[P], IsPartial> }
-    : { [P in keyof T]: FlexibleValue<T[P], IsPartial> };
+    ? {
+          [P in keyof T]?:
+              | FlexibleValue<T[P], IsPartial>
+              | (string extends keyof T ? LangTagSpecialFn : never);
+      }
+    : {
+          [P in keyof T]:
+              | FlexibleValue<T[P], IsPartial>
+              | (string extends keyof T ? LangTagSpecialFn : never);
+      };
 
 /**
  * Represents a flexible structure for translations where all properties are required, based on an original type `T`.
@@ -96,6 +109,9 @@ export function normalizeTranslations<T>(
                 // Convert string to a ParameterizedTranslation
                 result[key] = ((_params?: InterpolationParams) => value) as any;
             } else if (typeof value === 'function') {
+                if (isLangTagSpecial(value)) {
+                    continue;
+                }
                 // Assume functions are already ParameterizedTranslation or compatible
                 result[key] = value as any;
             }

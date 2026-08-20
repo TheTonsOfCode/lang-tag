@@ -9,6 +9,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': resolve(__dirname, './src'),
+            'lang-tag': resolve(__dirname, '../core/src/index.ts'),
         },
     },
 });

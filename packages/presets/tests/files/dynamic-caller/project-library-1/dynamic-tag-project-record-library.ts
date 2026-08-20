@@ -50,7 +50,28 @@ function project() {
     t.enums.AnnotationSortField.$('createdAt');
     t.enums.AnnotationSortField.createdAt.label();
 
-    // Same as project `translations={{ shared: sharedT }}`:
-    // `$` on `AnnotationSortField` is incompatible with the library index signature.
+    // Same as project `translations={{ shared: sharedT }}`.
+    // `$` is index-compatible + non-enumerable, so the library InputType accepts `t`.
     return SomeComponent(t);
 }
+
+// Type partial (Typed with `Schema`)
+SomeComponent({
+    enums: {
+        aaa: {
+            foo: {
+                label: 'xxx',
+            },
+        },
+        bbb: {
+            bar: {
+                description: () => 'yyy',
+                // @ts-expect-error look at Schema at top of the file
+                wrong: 'does not match `Schema`',
+            },
+        },
+    },
+    // type checker will not see it as it fails on first error aka. 'wrong' above, remove that and see there
+    // fails as expected
+    aaa: 'dasda',
+});

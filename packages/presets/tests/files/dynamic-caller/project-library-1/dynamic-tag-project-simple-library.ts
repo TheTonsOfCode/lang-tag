@@ -30,3 +30,10 @@ function project() {
     // Real usage
     return SomeComponent(t);
 }
+
+SomeComponent({
+    greeting: 'foo',
+    farewell: () => 'bar',
+    // $: () => 'dd',
+    // aa: 'bb',
+});
