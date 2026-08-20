@@ -1,3 +1,4 @@
+import { LangTagSpecial, isLangTagSpecial } from 'lang-tag';
 import { describe, expect, it } from 'vitest';
 
 import { withDynamicCaller } from '@/dynamic-caller';
@@ -73,6 +74,23 @@ describe('withDynamicCaller', () => {
             expect(t.__X('farewell')).toBe('Goodbye');
             expect(t.user.__X('name')).toBe('Ada');
         });
+    });
+
+    it('keeps the caller non-enumerable so key iteration skips it', () => {
+        const t = withDynamicCaller(makeBase(), { recursive: true });
+
+        expect(t.$('farewell')).toBe('Goodbye');
+        expect(Object.keys(t)).not.toContain('$');
+        expect(Object.keys(t.user)).not.toContain('$');
+        expect(Object.entries(t).map(([key]) => key)).not.toContain('$');
+    });
+
+    it('brands the caller as a lang-tag special', () => {
+        const t = withDynamicCaller(makeBase(), { recursive: true });
+
+        expect(isLangTagSpecial(t.$)).toBe(true);
+        expect(t.$[LangTagSpecial]).toBe('dynamic-caller');
+        expect(isLangTagSpecial(t.user.$)).toBe(true);
     });
 
     describe('typedKeys', () => {

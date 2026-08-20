@@ -8,6 +8,8 @@
  * editor reports these as errors (and, conversely, autocompletes the valid
  * caller name / keys).
  */
+import type { PartialFlexibleTranslations } from 'lang-tag';
+
 import {
     type DynamicCaller,
     type WithDynamicCaller,
@@ -149,3 +151,26 @@ const statusLoose = withDynamicCaller(statusTranslations, {
     typedKeys: false,
 });
 statusLoose.__X('saxas'); // allowed: key is `string`
+
+// ---------------------------------------------------------------------------
+// Record-typed library InputType: extra `$` must stay assignable.
+// ---------------------------------------------------------------------------
+
+type RecordSchema = {
+    enums: Record<
+        string,
+        Record<string, { label: string; description?: string }>
+    >;
+};
+
+type SchemaLiteral = {
+    enums: {
+        AnnotationSortField: {
+            createdAt: { label: () => string; description: () => string };
+            updatedAt: { label: () => string; description: () => string };
+        };
+    };
+};
+
+declare const wrappedSchema: WithDynamicCaller<SchemaLiteral, '$', true>;
+const _accepted: PartialFlexibleTranslations<RecordSchema> = wrappedSchema;

@@ -11,7 +11,12 @@
  * added to every nested translations object as well, and the `path` reported to
  * `onMissing` is the full dotted path of the missing key (e.g. `user.profile.name`).
  */
-import type { CallableTranslations, PlaceholderParamsOptions } from 'lang-tag';
+import {
+    type CallableTranslations,
+    type LangTagSpecialFn,
+    type PlaceholderParamsOptions,
+    markLangTagSpecial,
+} from 'lang-tag';
 
 /**
  * A dynamic caller: invokes a translation by its (runtime) key and returns the
@@ -23,10 +28,10 @@ import type { CallableTranslations, PlaceholderParamsOptions } from 'lang-tag';
  * is enabled (the default), so the editor autocompletes valid keys and rejects
  * unknown ones at compile time. Pass `typedKeys: false` to keep `string`.
  */
-export type DynamicCaller<Keys extends string = string> = (
-    key: Keys,
-    ...params: any[]
-) => string;
+export type DynamicCaller<Keys extends string = string> = LangTagSpecialFn<
+    'dynamic-caller',
+    (key: Keys, ...params: any[]) => string
+>;
 
 /**
  * The union of keys on `T` that resolve to a callable translation (i.e. the
@@ -166,16 +171,23 @@ export function withDynamicCaller<
             }
         }
 
-        result[callerName] = ((key: string, ...params: any[]) => {
-            const translationFn = obj[key];
-            if (typeof translationFn === 'function') {
-                return translationFn(...params);
-            }
-            const missingPath = basePath ? `${basePath}.${key}` : key;
-            return onMissing
-                ? onMissing(missingPath)
-                : `#Missing:${missingPath}#`;
-        }) satisfies DynamicCaller;
+        // Non-enumerable so `for…in` / Object.entries / normalizeTranslations
+        // do not treat the caller as a translation key.
+        Object.defineProperty(result, callerName, {
+            enumerable: false,
+            configurable: true,
+            writable: true,
+            value: markLangTagSpecial((key: string, ...params: any[]) => {
+                const translationFn = obj[key];
+                if (typeof translationFn === 'function') {
+                    return translationFn(...params);
+                }
+                const missingPath = basePath ? `${basePath}.${key}` : key;
+                return onMissing
+                    ? onMissing(missingPath)
+                    : `#Missing:${missingPath}#`;
+            }, 'dynamic-caller'),
+        });
 
         return result;
     };

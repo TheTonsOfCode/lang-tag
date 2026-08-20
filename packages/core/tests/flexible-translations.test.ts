@@ -4,6 +4,7 @@ import {
     FlexibleTranslations,
     InterpolationParams,
     ParameterizedTranslation,
+    markLangTagSpecial,
     normalizeTranslations,
 } from '@/index';
 
@@ -176,5 +177,24 @@ describe('normalizeTranslations and FlexibleTranslations', () => {
         expect(typeof normalized.staticMsg).toBe('function');
         expect(typeof normalized.dynamicMsg).toBe('function');
         expect(typeof normalized.nested.subStatic).toBe('function');
+    });
+
+    it('skips lang-tag specials so they are not copied as translation keys', () => {
+        const special = markLangTagSpecial(
+            (key: string) => key,
+            'dynamic-caller'
+        );
+        const input = {
+            title: 'Hello',
+            $: special,
+        };
+
+        const normalized = normalizeTranslations<{
+            title: string;
+            $: typeof special;
+        }>(input);
+
+        expect(normalized.title()).toBe('Hello');
+        expect(normalized.$).toBeUndefined();
     });
 });
