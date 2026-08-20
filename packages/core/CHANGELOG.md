@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.0](https://github.com/TheTonsOfCode/lang-tag/compare/Core-v0.14.3...Core-v0.15.0) (2026-08-20)
+
+
+### Features
+
+* lang-tag special symbol applied with dynamic caller ([1e843c1](https://github.com/TheTonsOfCode/lang-tag/commit/1e843c14251271c7685f282330c6b17d7f19998f))
+
 ## [0.14.3](https://github.com/TheTonsOfCode/lang-tag/compare/Core-v0.14.2...Core-v0.14.3) (2026-08-20)
 
 
