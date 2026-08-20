@@ -8,8 +8,16 @@
 import {
     type CallableTranslations,
     type DefinePlaceholderParams,
+    type ExtractAngleBracketPlaceholders,
+    type ExtractColonPlaceholders,
     type ExtractDollarBracePlaceholders,
+    type ExtractDollarIdentPlaceholders,
     type ExtractDoubleBracePlaceholders,
+    type ExtractDoubleSquarePlaceholders,
+    type ExtractPercentBracePlaceholders,
+    type ExtractPercentPercentPlaceholders,
+    type ExtractSingleBracePlaceholders,
+    type ExtractSingleSquarePlaceholders,
     type PlaceholderExtractor,
     type PlaceholderValues,
     createCallableTranslations,
@@ -41,6 +49,40 @@ type _Dollar = Expect<
         ExtractDollarBracePlaceholders<'Hello ${name} and ${ other }'>,
         'name' | 'other'
     >
+>;
+type _SingleBrace = Expect<
+    Equal<ExtractSingleBracePlaceholders<'Hi {name}, ignore {{raw}}'>, 'name'>
+>;
+type _PercentBrace = Expect<
+    Equal<ExtractPercentBracePlaceholders<'Hello %{name}'>, 'name'>
+>;
+type _PercentPercent = Expect<
+    Equal<ExtractPercentPercentPlaceholders<'Hello %name%'>, 'name'>
+>;
+type _Colon = Expect<Equal<ExtractColonPlaceholders<'Hello :name!'>, 'name'>>;
+type _ColonSnakeKebab = Expect<
+    Equal<
+        ExtractColonPlaceholders<'Hi :user_id / :order-id'>,
+        'user_id' | 'order-id'
+    >
+>;
+type _ColonRejectsLeadingDigit = Expect<
+    Equal<ExtractColonPlaceholders<'x :1abc y'>, never>
+>;
+type _DollarIdent = Expect<
+    Equal<ExtractDollarIdentPlaceholders<'Hi $name and ${ignored}'>, 'name'>
+>;
+type _DollarIdentSnake = Expect<
+    Equal<ExtractDollarIdentPlaceholders<'Hi $user_id!'>, 'user_id'>
+>;
+type _Angle = Expect<
+    Equal<ExtractAngleBracketPlaceholders<'Hello <name>'>, 'name'>
+>;
+type _DoubleSquare = Expect<
+    Equal<ExtractDoubleSquarePlaceholders<'Hello [[name]]'>, 'name'>
+>;
+type _SingleSquare = Expect<
+    Equal<ExtractSingleSquarePlaceholders<'Hi [name], ignore [[raw]]'>, 'name'>
 >;
 
 // --- PlaceholderValues: no placeholders stays permissive for every combo ----

@@ -1,92 +1,57 @@
 # @lang-tag/presets
 
-Optional, ready-made presets and helpers for [`lang-tag`](https://github.com/TheTonsOfCode/lang-tag).
-
-`lang-tag` stays intentionally minimal. This package bundles common add-ons so
-you don't have to re-implement them in every project.
+Optional helpers for [`lang-tag`](https://www.npmjs.com/package/lang-tag).
+Core stays a thin bridge to your i18n setup; this package covers common
+add-ons you would otherwise copy into every app.
 
 ## Install
 
 ```bash
-npm install @lang-tag/presets
+npm install @lang-tag/presets lang-tag
 ```
 
-`lang-tag` is a **peer dependency** — install it alongside:
-
-```bash
-npm install lang-tag
-```
+React peer (`>=18`) is optional — only needed for
+`@lang-tag/presets/react/placeholders`.
 
 ## Imports
 
-Each preset is imported from its own path:
+Each preset is a separate entry:
 
 ```ts
 import { withDynamicCaller } from '@lang-tag/presets/dynamic-caller';
+import { processPlaceholders } from '@lang-tag/presets/react/placeholders';
 ```
 
-## Presets
+## `dynamic-caller`
 
-### `dynamic-caller`
-
-Adds a dynamic caller property (named `$` by default) to a callable
-translations object, so a translation can be invoked by a **runtime** key
-instead of statically.
+Adds a runtime caller (default `$`) so you can invoke a translation by
+a **computed key** instead of a static property.
 
 ```ts
 import { withDynamicCaller } from '@lang-tag/presets/dynamic-caller';
 
 const t = withDynamicCaller(base.server());
 
-t.$('greeting', { name: 'Paul' }); // invoke by key + forward params
-t.$('unknown'); // -> "#Missing:unknown#"
+t.$('greeting', { name: 'Paul' });
+t.$('unknown'); // → "#Missing:unknown#"
 ```
 
-#### Options
-
-| Option       | Type                       | Default       | Description                                                                                                                                                                 |
-| ------------ | -------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `callerName` | `string`                   | `'$'`         | Name of the injected caller property.                                                                                                                                       |
-| `recursive`  | `boolean`                  | `false`       | Also add the caller to every nested translations object.                                                                                                                    |
-| `onMissing`  | `(path: string) => string` | `#Missing:…#` | Called when a key can't be resolved. With `recursive`, `path` is the full dotted path.                                                                                      |
-| `typedKeys`  | `boolean`                  | `true`        | Type the caller's `key` argument to the object's translation keys (autocomplete + rejects unknown keys). Pass `false` for open `string` keys. Type-only, no runtime effect. |
-
-```ts
-const t = withDynamicCaller(base.server(), {
-    callerName: 'call',
-    recursive: true,
-    onMissing: (path) => `[[${path}]]`,
-});
-
-t.call('greeting');
-t.user.call('name'); // caller is available on nested objects too
-```
-
-#### Typed keys
-
-By default, the caller's key is narrowed to the actual translation keys, so the
-editor autocompletes them and rejects unknown keys at compile time:
-
-```ts
-const t = withDynamicCaller(base.server());
-
-t.$('greeting'); // ok
-t.$('nope'); // compile-time error
-```
-
-Pass `typedKeys: false` when you need an open `string` key (e.g. fully dynamic
-runtime paths):
+| Option       | Default       | Description                                    |
+| ------------ | ------------- | ---------------------------------------------- |
+| `callerName` | `'$'`         | Property name for the caller                   |
+| `recursive`  | `false`       | Also inject the caller on nested objects       |
+| `onMissing`  | `#Missing:…#` | Fallback when the key cannot be resolved       |
+| `typedKeys`  | `true`        | Narrow `key` to known translation keys (types) |
 
 ```ts
 const t = withDynamicCaller(base.server(), { typedKeys: false });
-t.$('any-runtime-key'); // ok
+t.$('any-runtime-key'); // open string key
 ```
 
-### `react/placeholders`
+## `react/placeholders`
 
-Replaces `{{ name }}` placeholders with values that may be React nodes. When a
-placeholder resolves to a React element the result is a React fragment tree,
-otherwise a plain string is returned. Wire it into a tag's `transform`:
+Interpolate `{{ name }}` with values that may be React nodes. Returns a
+string when every value is textual, otherwise a fragment tree.
 
 ```ts
 import { processPlaceholders } from '@lang-tag/presets/react/placeholders';
@@ -96,20 +61,28 @@ createCallableTranslations(translations, config, {
 });
 ```
 
-Prefer a different placeholder syntax? Pass a custom `pattern` (the placeholder
-name must be the first capture group; the global flag is added if missing):
+Custom runtime syntax (first capture group = name). Pair with a custom
+`PlaceholderExtractor` in `lang-tag` if types should match:
 
 ```ts
-// `${ name }` instead of `{{ name }}`
 processPlaceholders(value, params, { pattern: /\$\{(.*?)\}/g });
 ```
 
-`react` is an **optional** peer dependency (`>=18`) — install it only if you use
-this module:
+## Guidelines
 
-```bash
-npm install react
-```
+1. Use static property access for known keys; use `$()` for runtime
+   unions.
+2. Model runtime keys as TypeScript unions, not free `string`, when
+   `typedKeys` is on.
+3. Prefer complete sentences with placeholders over concatenating
+   translated fragments.
+
+## See also
+
+- [`lang-tag`](https://www.npmjs.com/package/lang-tag)
+- [`@lang-tag/cli`](https://www.npmjs.com/package/@lang-tag/cli)
+- [Docs](https://github.com/TheTonsOfCode/lang-tag/blob/main/docs/packages/presets.md)
+- [Changelog](./CHANGELOG.md)
 
 ## License
 
