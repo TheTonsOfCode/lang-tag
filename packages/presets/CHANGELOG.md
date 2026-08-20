@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.5](https://github.com/TheTonsOfCode/lang-tag/compare/Presets-v0.0.4...Presets-v0.0.5) (2026-08-20)
+
+
+### Bug Fixes
+
+* Proper README's and few ready to use placeholders extractors used in core README ([b4f3c4f](https://github.com/TheTonsOfCode/lang-tag/commit/b4f3c4fcedf5ab4937bc1e98fced87d5d20137a7))
+
 ## [0.0.4](https://github.com/TheTonsOfCode/lang-tag/compare/Presets-v0.0.3...Presets-v0.0.4) (2026-07-21)
 
 ### Miscellaneous
