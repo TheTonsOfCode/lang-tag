@@ -5,7 +5,10 @@ import { i18n_project } from './i18n-project';
  * Mirrors library tags the schema as `Record` (index signatures), not named keys.
  */
 type Schema = {
-    enums: Record<string, Record<string, { label: string; description?: string }>>;
+    enums: Record<
+        string,
+        Record<string, { label: string; description?: string }>
+    >;
 };
 
 const SCHEMA = {
