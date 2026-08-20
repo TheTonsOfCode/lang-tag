@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.0](https://github.com/TheTonsOfCode/lang-tag/compare/Presets-v0.0.5...Presets-v0.1.0) (2026-08-20)
+
+
+### Features
+
+* lang-tag special symbol applied with dynamic caller ([1e843c1](https://github.com/TheTonsOfCode/lang-tag/commit/1e843c14251271c7685f282330c6b17d7f19998f))
+
 ## [0.0.5](https://github.com/TheTonsOfCode/lang-tag/compare/Presets-v0.0.4...Presets-v0.0.5) (2026-08-20)
 
 
