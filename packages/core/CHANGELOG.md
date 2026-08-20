@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.3](https://github.com/TheTonsOfCode/lang-tag/compare/Core-v0.14.2...Core-v0.14.3) (2026-08-20)
+
+
+### Bug Fixes
+
+* Proper README's and few ready to use placeholders extractors used in core README ([b4f3c4f](https://github.com/TheTonsOfCode/lang-tag/commit/b4f3c4fcedf5ab4937bc1e98fced87d5d20137a7))
+
 ## [0.14.1]–[0.14.2](https://github.com/TheTonsOfCode/lang-tag/compare/Core-v0.14.0...Core-v0.14.2) (2026-07-21)
 
 ### Miscellaneous
