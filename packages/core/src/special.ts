@@ -3,9 +3,9 @@
  * =================
  *
  * {@link LangTagSpecial} brands a value with a {@link LangTagSpecialKind}.
- * Functions (`$`, a custom `callerName`, future `plural` / `count`) are not
- * translation leaves — Record `InputType`s accept them and reject plain
- * extra functions.
+ * Functions (`$`, a custom `callerName`, a callable `t('key')` object,
+ * future `plural` / `count`) are not translation leaves — Record
+ * `InputType`s accept them and reject plain extra functions.
  *
  * The same brand on a translations object is the overlap for a weak named
  * node (`delete: {}` → `{ [caller]: Special }`) so it assigns into

@@ -119,6 +119,14 @@ export function normalizeTranslations<T>(
                 result[key] = (_params?: InterpolationParams) => value;
             } else if (typeof value === 'function') {
                 if (isLangTagSpecial(value)) {
+                    // Pure special (`$`) has no enumerable keys — skip.
+                    // A callable translations tree (asDynamicCaller) is itself
+                    // a special function; walk its own keys.
+                    if (Object.keys(value).length > 0) {
+                        result[key] = normalizeTranslations(
+                            value as RecursiveFlexibleTranslations<any, boolean>
+                        );
+                    }
                     continue;
                 }
                 // Assume functions are already ParameterizedTranslation or compatible
