@@ -1,4 +1,8 @@
-import { LangTagSpecialFn, isLangTagSpecial } from './special';
+import {
+    LangTagSpecialBrand,
+    LangTagSpecialFn,
+    isLangTagSpecial,
+} from './special';
 import {
     CallableTranslations,
     InterpolationParams,
@@ -28,8 +32,10 @@ type FlexibleValue<T, IsPartial extends boolean> = T extends (
  * can be its original type, a string, or a `ParameterizedTranslation` function.
  * If `IsPartial` is true, all properties at all levels of nesting become optional.
  *
- * String-index (`Record`) schemas also accept {@link LangTagSpecialFn}
- * so a branded special (`$`, future `plural` / `count`) stays assignable.
+ * Every node carries an optional {@link LangTagSpecialBrand}, so a recursive
+ * dynamic caller on a weak named object (`delete: {}` → `{ [caller]: Special }`)
+ * assigns regardless of `callerName`. String-index (`Record`) schemas
+ * additionally accept {@link LangTagSpecialFn} on the index.
  *
  * @template T The original, un-transformed, structure of the translations.
  * @template IsPartial A boolean indicating whether properties should be optional.
@@ -37,10 +43,7 @@ type FlexibleValue<T, IsPartial extends boolean> = T extends (
  *   If false, properties are required (e.g., `string`).
  */
 
-export type RecursiveFlexibleTranslations<
-    T,
-    IsPartial extends boolean,
-> = IsPartial extends true
+type FlexibleObject<T, IsPartial extends boolean> = IsPartial extends true
     ? {
           [P in keyof T]?:
               | FlexibleValue<T[P], IsPartial>
@@ -51,6 +54,11 @@ export type RecursiveFlexibleTranslations<
               | FlexibleValue<T[P], IsPartial>
               | (string extends keyof T ? LangTagSpecialFn : never);
       };
+
+export type RecursiveFlexibleTranslations<
+    T,
+    IsPartial extends boolean,
+> = FlexibleObject<T, IsPartial> & Partial<LangTagSpecialBrand>;
 
 /**
  * Represents a flexible structure for translations where all properties are required, based on an original type `T`.
@@ -86,11 +94,12 @@ export type PartialFlexibleTranslations<T> = RecursiveFlexibleTranslations<
 export function normalizeTranslations<T>(
     translations: RecursiveFlexibleTranslations<T, boolean>
 ): CallableTranslations<T> {
-    const result = {} as CallableTranslations<T>;
+    const result: Record<string, unknown> = {};
+    const source = translations as Record<string, unknown>;
 
-    for (const key in translations) {
-        if (Object.prototype.hasOwnProperty.call(translations, key)) {
-            const value = translations[key];
+    for (const key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+            const value = source[key];
 
             if (value === null || value === undefined) {
                 continue;
@@ -104,16 +113,16 @@ export function normalizeTranslations<T>(
                 // Recursively normalize nested objects
                 result[key] = normalizeTranslations(
                     value as RecursiveFlexibleTranslations<any, boolean>
-                ) as any;
+                );
             } else if (typeof value === 'string') {
                 // Convert string to a ParameterizedTranslation
-                result[key] = ((_params?: InterpolationParams) => value) as any;
+                result[key] = (_params?: InterpolationParams) => value;
             } else if (typeof value === 'function') {
                 if (isLangTagSpecial(value)) {
                     continue;
                 }
                 // Assume functions are already ParameterizedTranslation or compatible
-                result[key] = value as any;
+                result[key] = value;
             }
             // else {
             //     // For other types (e.g., number, boolean), convert to string and then to ParameterizedTranslation
@@ -122,5 +131,5 @@ export function normalizeTranslations<T>(
             // }
         }
     }
-    return result;
+    return result as CallableTranslations<T>;
 }

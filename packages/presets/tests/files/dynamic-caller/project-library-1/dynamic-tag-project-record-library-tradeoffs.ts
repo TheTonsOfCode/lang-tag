@@ -70,7 +70,8 @@ const _notALeaf: InputType = {
 };
 
 // ---------------------------------------------------------------------------
-// 3. Named-key InputType stays closed — extra `$` is still rejected.
+// 3. Named-key InputType stays closed — extra `$` on a fresh literal is
+//    still rejected (the special brand does not open the object to string keys).
 // ---------------------------------------------------------------------------
 
 const named = i18n_library({ greeting: 'Hi', user: { name: 'Ada' } });
@@ -82,7 +83,7 @@ const _namedOk: typeof named.InputType = {
 
 const _namedExtra: typeof named.InputType = {
     greeting: 'Hello',
-    // @ts-expect-error named keys have no index to absorb `$`
+    // @ts-expect-error named keys have no string index to absorb `$`
     $: () => 'nope',
 };
 

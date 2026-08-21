@@ -91,6 +91,22 @@ describe('withDynamicCaller', () => {
         expect(isLangTagSpecial(t.$)).toBe(true);
         expect(t.$[LangTagSpecial]).toBe('dynamic-caller');
         expect(isLangTagSpecial(t.user.$)).toBe(true);
+        expect(t[LangTagSpecial]).toBe('dynamic-caller');
+        expect(t.user[LangTagSpecial]).toBe('dynamic-caller');
+        expect(isLangTagSpecial(t)).toBe(false);
+    });
+
+    it('brands objects for a custom caller name', () => {
+        const t = withDynamicCaller(makeBase(), {
+            recursive: true,
+            callerName: 'call',
+        });
+
+        expect(isLangTagSpecial(t.call)).toBe(true);
+        expect(t.call[LangTagSpecial]).toBe('dynamic-caller');
+        expect(t[LangTagSpecial]).toBe('dynamic-caller');
+        expect(t.user[LangTagSpecial]).toBe('dynamic-caller');
+        expect(Object.keys(t)).not.toContain('call');
     });
 
     describe('typedKeys', () => {
