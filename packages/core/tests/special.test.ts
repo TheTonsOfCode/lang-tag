@@ -16,4 +16,13 @@ describe('lang-tag specials', () => {
         expect(isLangTagSpecial(() => 'x')).toBe(false);
         expect(isLangTagSpecial({ label: 'x' })).toBe(false);
     });
+
+    it('brands an object with the same kind (not a special function)', () => {
+        const obj = markLangTagSpecial({ label: 'x' }, 'dynamic-caller');
+
+        expect(obj[LangTagSpecial]).toBe('dynamic-caller');
+        expect(isLangTagSpecial(obj)).toBe(false);
+        expect(Object.keys(obj)).toEqual(['label']);
+        expect(LangTagSpecial in { label: 'x' }).toBe(false);
+    });
 });

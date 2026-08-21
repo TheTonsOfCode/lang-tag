@@ -13,6 +13,7 @@
  */
 import {
     type CallableTranslations,
+    type LangTagSpecialBrand,
     type LangTagSpecialFn,
     type PlaceholderParamsOptions,
     markLangTagSpecial,
@@ -81,6 +82,9 @@ export interface DynamicCallerPresetOptions<Caller extends string = '$'> {
  * The result of {@link withDynamicCaller}: the original translations structure
  * with the caller property added. When `Recursive` is `true` the caller is also
  * present on every nested object; translation functions are left untouched.
+ * Every wrapped object is a {@link LangTagSpecialBrand} of kind
+ * `'dynamic-caller'` so it assigns into a library `InputType` even when
+ * the caller name is not `'$'`.
  * @template T - The callable translations structure.
  * @template Caller - The literal name of the caller property.
  * @template Recursive - Whether the caller was added recursively.
@@ -104,7 +108,7 @@ export type WithDynamicCaller<
     [P in Caller]: DynamicCaller<
         TypedKeys extends true ? DynamicCallerKeys<T> : string
     >;
-};
+} & LangTagSpecialBrand<'dynamic-caller'>;
 
 /**
  * Wraps a callable translations object with a dynamic caller property.
@@ -189,7 +193,7 @@ export function withDynamicCaller<
             }, 'dynamic-caller'),
         });
 
-        return result;
+        return markLangTagSpecial(result, 'dynamic-caller');
     };
 
     return wrap(translations, '') as WithDynamicCaller<

@@ -3,17 +3,21 @@
  *
  * Pair with `dynamic-tag-project-record-library.ts` (schema `Record` — `$`
  * accepted). Here the form prop is `{ shared, group }`. Group is named keys
- * intersected with `Record<string, any>`.
- *
- * Inner hole: `delete: {}` plus recursive `$` becomes `{ $ }`. That fails the
- * weak type `{ trigger?, title?, description? }` (no overlapping keys).
+ * intersected with `Record<string, any>`. `delete: {}` plus a recursive
+ * caller is `{ [callerName]: Special }` against the weak
+ * `{ trigger?, title?, description? }` — absorbed by the {@link LangTagSpecial}
+ * brand (`LangTagSpecialKind`) on every `PartialFlexibleTranslations` node,
+ * for any caller name.
  *
  * Type-checked only (`tsc --noEmit`).
  */
-import type {
-    LangTagTranslations,
-    PartialFlexibleTranslations,
+import {
+    type LangTagTranslations,
+    type PartialFlexibleTranslations,
+    createCallableTranslations,
 } from 'lang-tag';
+
+import { withDynamicCaller } from '@/dynamic-caller';
 
 import { i18n_library } from './i18n-library';
 import { i18n_project } from './i18n-project';
@@ -134,6 +138,53 @@ const _extraOk: typeof extraTag.InputType = projectExtra;
 
 SpaceCreateForm({
     shared: projectShared,
-    // @ts-expect-error group Type (`delete` + `$`) is not assignable to TranslationsInput.group
     group: projectGroup,
+});
+
+const projectGroupCall = withDynamicCaller(
+    createCallableTranslations(GROUP, undefined, {
+        transform: ({ value }) => value,
+    }),
+    { recursive: true, typedKeys: false, callerName: 'call' }
+);
+
+SpaceCreateForm({
+    shared: projectShared,
+    group: projectGroupCall,
+});
+
+const projectGroupCall2 = withDynamicCaller(
+    createCallableTranslations(GROUP, undefined, {
+        transform: ({ value }) => value,
+    }),
+    { recursive: false, typedKeys: false, callerName: 'foo' }
+);
+
+SpaceCreateForm({
+    shared: projectShared,
+    group: projectGroupCall2,
+});
+
+const projectGroupCall3 = withDynamicCaller(
+    createCallableTranslations(GROUP, undefined, {
+        transform: ({ value }) => value,
+    }),
+    { recursive: false, typedKeys: true, callerName: 'bar' }
+);
+
+SpaceCreateForm({
+    shared: projectShared,
+    group: projectGroupCall3,
+});
+
+const projectGroupCall4 = withDynamicCaller(
+    createCallableTranslations(GROUP, undefined, {
+        transform: ({ value }) => value,
+    }),
+    { recursive: true, typedKeys: true, callerName: 'candy' }
+);
+
+SpaceCreateForm({
+    shared: projectShared,
+    group: projectGroupCall4,
 });
