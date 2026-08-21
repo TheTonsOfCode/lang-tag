@@ -1,5 +1,5 @@
 {
     "packages/cli": "0.28.3",
-    "packages/core": "0.15.0",
-    "packages/presets": "0.1.0"
+    "packages/core": "0.15.1",
+    "packages/presets": "0.1.1"
 }

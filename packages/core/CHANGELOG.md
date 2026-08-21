@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.1](https://github.com/TheTonsOfCode/lang-tag/compare/Core-v0.15.0...Core-v0.15.1) (2026-08-21)
+
+
+### Bug Fixes
+
+* partials with extra brand types ([de735a4](https://github.com/TheTonsOfCode/lang-tag/commit/de735a4b2bb3a1317452750d02ab6fe8ecb26539))
+
 ## [0.15.0](https://github.com/TheTonsOfCode/lang-tag/compare/Core-v0.14.3...Core-v0.15.0) (2026-08-20)
 
 
