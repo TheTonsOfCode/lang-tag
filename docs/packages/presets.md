@@ -78,15 +78,18 @@ createCallableTranslations(translations, config, {
 
 - String / number params → string result.
 - Any React element param → fragment tree mixing text and nodes.
-- Custom `pattern`: RegExp whose **first capture group** is the
-  placeholder name (`/g` added if missing).
+- Default `{{ name }}` — no options. Another built-in: `syntax` matching
+  the tag's `extractor`. Custom extractor: `pattern` (first capture
+  group = name). `syntax` and `pattern` are mutually exclusive.
 
 ```ts
-processPlaceholders(value, params, { pattern: /\$\{(.*?)\}/g });
-```
+transform: ({ value, params }) =>
+    processPlaceholders(value, params, { syntax: 'dollarBrace' }),
+// types: DefinePlaceholderParams<{ extractor: DollarBraceExtractor }>
 
-Pair with core `DefinePlaceholderParams` / `DollarBraceExtractor` if
-your **types** should match a non-default syntax.
+transform: ({ value, params }) =>
+    processPlaceholders(value, params, { pattern: /!(.*?)!/g }),
+```
 
 ## Runtime behaviour
 

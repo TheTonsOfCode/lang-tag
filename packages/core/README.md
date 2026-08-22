@@ -183,17 +183,43 @@ type PlaceholderParams = DefinePlaceholderParams<{
 }>;
 ```
 
-`Hello !name!` then infers `{ name: … }` on the call site. Keep runtime
-replacement in sync in your tag `transform` (or a preset).
+`Hello !name!` then infers `{ name: … }` on the call site. Types do not
+replace the markers — that happens in the tag `transform`.
+
+`@lang-tag/presets` ships `processPlaceholders` for that step (and
+keeps React nodes intact). Drop it in:
+
+```ts
+import { processPlaceholders } from '@lang-tag/presets/react/placeholders';
+
+createCallableTranslations(translations, config, {
+    transform: ({ value, params }) => processPlaceholders(value, params),
+});
+```
+
+Default `{{ name }}` needs no extra options. If the tag uses another
+built-in extractor, pass the matching `syntax` so types and replacement
+read the same markers:
+
+```ts
+import type { DefinePlaceholderParams, DollarBraceExtractor } from 'lang-tag';
+
+type PlaceholderParams = DefinePlaceholderParams<{
+    extractor: DollarBraceExtractor;
+}>;
+
+transform: ({ value, params }) =>
+    processPlaceholders(value, params, { syntax: 'dollarBrace' }),
+```
+
+A custom extractor (the `!name!` example above) uses `pattern` instead
+— first capture group is the name: `{ pattern: /!(.*?)!/g }`.
 
 | Option        | Role                                    |
 | ------------- | --------------------------------------- |
 | `required`    | Params required when placeholders exist |
 | `allowExtras` | Allow extra keys beyond inferred names  |
 | `extractor`   | How names are parsed out of the message |
-
-Typing is compile-time only. Runtime replacement is **your**
-`transform` (or `@lang-tag/presets` for React nodes).
 
 ## Important APIs
 

@@ -24,21 +24,41 @@
 import * as React from 'react';
 import type { ReactNode } from 'react';
 
-/** The default placeholder syntax: `{{ name }}`. */
-const DEFAULT_PLACEHOLDER_PATTERN = /{{(.*?)}}/g;
+import {
+    type PlaceholderSyntax,
+    resolvePlaceholderPattern,
+} from '../placeholder-patterns';
 
-/** Options controlling how placeholders are matched. */
-export interface ProcessPlaceholdersOptions {
-    /**
-     * Regex matching a single placeholder, with the **placeholder name in the
-     * first capture group**. The global (`g`) flag is added automatically if
-     * missing. Defaults to `/{{(.*?)}}/g` (i.e. `{{ name }}`).
-     * @example
-     * // `${ name }` syntax instead of `{{ name }}`:
-     * processPlaceholders(value, params, { pattern: /\$\{(.*?)\}/g });
-     */
-    pattern?: RegExp;
-}
+export type { PlaceholderSyntax } from '../placeholder-patterns';
+export { PLACEHOLDER_PATTERNS } from '../placeholder-patterns';
+
+/**
+ * How placeholders are matched — a built-in `syntax` **or** a custom
+ * `pattern`, never both.
+ */
+export type ProcessPlaceholdersOptions =
+    | {
+          /**
+           * Built-in syntax matching a core extractor (e.g. `'dollarBrace'` →
+           * `DollarBraceExtractor` / `${ name }`). Defaults to `'doubleBrace'`
+           * (`{{ name }}`).
+           * @example
+           * processPlaceholders(value, params, { syntax: 'dollarBrace' });
+           */
+          syntax?: PlaceholderSyntax;
+          pattern?: never;
+      }
+    | {
+          /**
+           * Custom regex matching a single placeholder, with the **placeholder
+           * name in the first capture group**. The global (`g`) flag is added
+           * automatically if missing. Use this when core does not ship the syntax.
+           * @example
+           * processPlaceholders(value, params, { pattern: /!(.*?)!/g });
+           */
+          pattern: RegExp;
+          syntax?: never;
+      };
 
 /** Ensures the regex carries the global flag so every match is visited. */
 function toGlobalPattern(pattern: RegExp): RegExp {
@@ -50,11 +70,12 @@ function toGlobalPattern(pattern: RegExp): RegExp {
 /**
  * Interpolates placeholders in `translation` with `params`.
  * @param translation - The translation string containing placeholder markers
- * (`{{ name }}` by default, or whatever {@link ProcessPlaceholdersOptions.pattern} matches).
+ * (`{{ name }}` by default, or whatever {@link ProcessPlaceholdersOptions.syntax}
+ * / {@link ProcessPlaceholdersOptions.pattern} matches).
  * @param params - Values keyed by placeholder name. React elements are kept as
  * nodes; strings, numbers and booleans are stringified; anything else becomes
  * an empty string.
- * @param options - See {@link ProcessPlaceholdersOptions} (e.g. a custom `pattern`).
+ * @param options - See {@link ProcessPlaceholdersOptions} (`syntax` or a custom `pattern`).
  * @returns A plain string when no React nodes are involved, otherwise a React
  * fragment tree (typed as `string` for lang-tag transform compatibility).
  */
@@ -66,7 +87,11 @@ export function processPlaceholders(
     if (typeof translation !== 'string') return '';
 
     const pattern = toGlobalPattern(
-        options?.pattern ?? DEFAULT_PLACEHOLDER_PATTERN
+        options && 'pattern' in options && options.pattern
+            ? options.pattern
+            : resolvePlaceholderPattern(
+                  options && 'syntax' in options ? options.syntax : undefined
+              )
     );
 
     const parts: ReactNode[] = [];
