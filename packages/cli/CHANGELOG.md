@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.28.4](https://github.com/TheTonsOfCode/lang-tag/compare/CLI-v0.28.3...CLI-v0.28.4) (2026-08-22)
+
+
+### Bug Fixes
+
+* hide compiled exports cmd more gracefully ([58d540c](https://github.com/TheTonsOfCode/lang-tag/commit/58d540cdc7a6c7eec7f543294b6c9accf1a8ce15))
+
 ## [0.28.3](https://github.com/TheTonsOfCode/lang-tag/compare/CLI-v0.28.2...CLI-v0.28.3) (2026-08-20)
 
 
