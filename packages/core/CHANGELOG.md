@@ -5,7 +5,7 @@
 
 ### Features
 
-* asDynamicCaller ([d402d65](https://github.com/TheTonsOfCode/lang-tag/commit/d402d65f164210274a99a83f89662d04169b14c1))
+* added support for function asDynamicCaller ([d402d65](https://github.com/TheTonsOfCode/lang-tag/commit/d402d65f164210274a99a83f89662d04169b14c1))
 
 ## [0.15.1](https://github.com/TheTonsOfCode/lang-tag/compare/Core-v0.15.0...Core-v0.15.1) (2026-08-21)
 
