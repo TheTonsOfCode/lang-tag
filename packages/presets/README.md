@@ -48,6 +48,20 @@ const t = withDynamicCaller(base.server(), { typedKeys: false });
 t.$('any-runtime-key'); // open string key
 ```
 
+To make `t` itself the caller (`t('greeting')` instead of `t.$('greeting')`):
+
+```ts
+import { asDynamicCaller } from '@lang-tag/presets/dynamic-caller';
+
+const t = asDynamicCaller(base.server(), { recursive: true });
+
+t.greeting({ name: 'Paul' });
+t('greeting', { name: 'Paul' });
+t.user('name');
+```
+
+Same `recursive`, `typedKeys`, and `onMissing` options — no `callerName`.
+
 ## `react/placeholders`
 
 Interpolate `{{ name }}` with values that may be React nodes. Returns a

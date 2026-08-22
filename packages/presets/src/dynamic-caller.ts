@@ -50,17 +50,14 @@ export type DynamicCallerKeys<T> = Extract<
 >;
 
 /**
- * Options controlling how the dynamic caller is injected.
- * @template Caller - The literal name used for the caller property. Defaults to `'$'`.
+ * Shared options for {@link withDynamicCaller} and {@link asDynamicCaller}.
  */
-export interface DynamicCallerPresetOptions<Caller extends string = '$'> {
+export interface DynamicCallerBaseOptions {
     /**
-     * Whether to add the caller recursively to every nested translations object.
-     * Defaults to `false` (only the top level receives the caller).
+     * Whether the caller is applied recursively to every nested translations
+     * object. Defaults to `false` (only the top level).
      */
     recursive?: boolean;
-    /** Name of the caller property. Defaults to `'$'`. */
-    callerName?: Caller;
     /**
      * Called when a key cannot be resolved to a translation function. Receives the
      * path of the missing key and returns the string to use in its place. When
@@ -77,6 +74,24 @@ export interface DynamicCallerPresetOptions<Caller extends string = '$'> {
      */
     typedKeys?: boolean;
 }
+
+/**
+ * Options controlling how the dynamic caller property is injected.
+ * @template Caller - The literal name used for the caller property. Defaults to `'$'`.
+ */
+export interface DynamicCallerPresetOptions<
+    Caller extends string = '$',
+> extends DynamicCallerBaseOptions {
+    /** Name of the caller property. Defaults to `'$'`. */
+    callerName?: Caller;
+}
+
+/**
+ * Options for {@link asDynamicCaller}. Same as {@link DynamicCallerBaseOptions}
+ * — there is no `callerName` because the translations object itself is the
+ * caller (`t('greeting')`).
+ */
+export type AsDynamicCallerPresetOptions = DynamicCallerBaseOptions;
 
 /**
  * The result of {@link withDynamicCaller}: the original translations structure
@@ -109,6 +124,21 @@ export type WithDynamicCaller<
         TypedKeys extends true ? DynamicCallerKeys<T> : string
     >;
 } & LangTagSpecialBrand<'dynamic-caller'>;
+
+function createDynamicCallerFn(
+    obj: Record<string, any>,
+    basePath: string,
+    onMissing?: (path: string) => string
+): DynamicCaller {
+    return markLangTagSpecial((key: string, ...params: any[]) => {
+        const translationFn = obj[key];
+        if (typeof translationFn === 'function') {
+            return translationFn(...params);
+        }
+        const missingPath = basePath ? `${basePath}.${key}` : key;
+        return onMissing ? onMissing(missingPath) : `#Missing:${missingPath}#`;
+    }, 'dynamic-caller');
+}
 
 /**
  * Wraps a callable translations object with a dynamic caller property.
@@ -181,16 +211,7 @@ export function withDynamicCaller<
             enumerable: false,
             configurable: true,
             writable: true,
-            value: markLangTagSpecial((key: string, ...params: any[]) => {
-                const translationFn = obj[key];
-                if (typeof translationFn === 'function') {
-                    return translationFn(...params);
-                }
-                const missingPath = basePath ? `${basePath}.${key}` : key;
-                return onMissing
-                    ? onMissing(missingPath)
-                    : `#Missing:${missingPath}#`;
-            }, 'dynamic-caller'),
+            value: createDynamicCallerFn(obj, basePath, onMissing),
         });
 
         return markLangTagSpecial(result, 'dynamic-caller');
@@ -202,6 +223,102 @@ export function withDynamicCaller<
         Recursive,
         TypedKeys
     >;
+}
+
+/**
+ * The result of {@link asDynamicCaller}: the translations structure is itself
+ * the dynamic caller (`t('greeting')`). When `Recursive` is `true` every
+ * nested object is also callable; translation functions are left untouched.
+ * @template T - The callable translations structure.
+ * @template Recursive - Whether nested objects are also callable.
+ * @template TypedKeys - Whether the caller's key argument is narrowed to the
+ * object's translation keys (see {@link DynamicCallerBaseOptions.typedKeys}).
+ */
+export type AsDynamicCaller<
+    T,
+    Recursive extends boolean,
+    TypedKeys extends boolean = true,
+> = {
+    [K in keyof T]: Recursive extends true
+        ? T[K] extends (...args: any[]) => any
+            ? T[K]
+            : T[K] extends Record<string, any>
+              ? AsDynamicCaller<T[K], Recursive, TypedKeys>
+              : T[K]
+        : T[K];
+} & DynamicCaller<TypedKeys extends true ? DynamicCallerKeys<T> : string>;
+
+/**
+ * Makes a callable translations object itself a dynamic caller: `t('greeting')`
+ * in addition to `t.greeting()`. Same options as {@link withDynamicCaller}
+ * except there is no `callerName`.
+ * @template T - The source translations structure.
+ * @template Recursive - Whether nested objects are also callable (inferred from `options.recursive`).
+ * @template TypedKeys - Whether the caller's key is typed to the translation keys (inferred from `options.typedKeys`).
+ * @param translations - The callable translations object to wrap.
+ * @param options - See {@link AsDynamicCallerPresetOptions}.
+ * @returns The translations object, callable as a {@link DynamicCaller}.
+ * @example
+ * const t = asDynamicCaller(base.server());
+ * t.greeting({ name: 'Paul' });
+ * t('greeting', { name: 'Paul' });
+ * t('nope'); // compile-time error when typedKeys is on
+ * @example
+ * const t = asDynamicCaller(base.server(), {
+ *     recursive: true,
+ *     onMissing: (path) => `[[${path}]]`,
+ * });
+ * t.user('name');
+ * @example
+ * const t = asDynamicCaller(base.server(), { typedKeys: false });
+ * t('any-runtime-key');
+ */
+export function asDynamicCaller<
+    T extends Record<string, any>,
+    Recursive extends boolean = false,
+    TypedKeys extends boolean = true,
+>(
+    translations: T,
+    options: {
+        recursive?: Recursive;
+        onMissing?: (path: string) => string;
+        typedKeys?: TypedKeys;
+    } = {}
+): AsDynamicCaller<T, Recursive, TypedKeys> {
+    const { recursive = false, onMissing } = options;
+
+    const wrap = (
+        obj: Record<string, any>,
+        basePath: string
+    ): Record<string, any> => {
+        const result = createDynamicCallerFn(
+            obj,
+            basePath,
+            onMissing
+        ) as DynamicCaller & Record<string, any>;
+
+        for (const [key, value] of Object.entries(obj)) {
+            const next =
+                recursive &&
+                value &&
+                typeof value === 'object' &&
+                !Array.isArray(value)
+                    ? wrap(value, basePath ? `${basePath}.${key}` : key)
+                    : value;
+            // Functions have read-only `name` / `length`; assignment throws
+            // on keys like `user.name`. defineProperty overwrites them.
+            Object.defineProperty(result, key, {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: next,
+            });
+        }
+
+        return result;
+    };
+
+    return wrap(translations, '') as AsDynamicCaller<T, Recursive, TypedKeys>;
 }
 
 /**
@@ -222,3 +339,14 @@ export type CallableTranslationsWithDynamicCaller<
     Recursive,
     TypedKeys
 >;
+
+/**
+ * Convenience alias: {@link CallableTranslations} made callable via
+ * {@link asDynamicCaller}.
+ */
+export type CallableTranslationsAsDynamicCaller<
+    T,
+    PPO extends PlaceholderParamsOptions = {},
+    Recursive extends boolean = false,
+    TypedKeys extends boolean = true,
+> = AsDynamicCaller<CallableTranslations<T, PPO>, Recursive, TypedKeys>;

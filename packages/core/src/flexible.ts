@@ -35,7 +35,9 @@ type FlexibleValue<T, IsPartial extends boolean> = T extends (
  * Every node carries an optional {@link LangTagSpecialBrand}, so a recursive
  * dynamic caller on a weak named object (`delete: {}` → `{ [caller]: Special }`)
  * assigns regardless of `callerName`. String-index (`Record`) schemas
- * additionally accept {@link LangTagSpecialFn} on the index.
+ * accept {@link LangTagSpecialFn} on the index **and** as the node itself
+ * (a callable `t` is a function–object; TS will not assign that to a
+ * `Record` index unless the source also has one).
  *
  * @template T The original, un-transformed, structure of the translations.
  * @template IsPartial A boolean indicating whether properties should be optional.
@@ -58,7 +60,11 @@ type FlexibleObject<T, IsPartial extends boolean> = IsPartial extends true
 export type RecursiveFlexibleTranslations<
     T,
     IsPartial extends boolean,
-> = FlexibleObject<T, IsPartial> & Partial<LangTagSpecialBrand>;
+> = string extends keyof T
+    ?
+          | (FlexibleObject<T, IsPartial> & Partial<LangTagSpecialBrand>)
+          | LangTagSpecialFn
+    : FlexibleObject<T, IsPartial> & Partial<LangTagSpecialBrand>;
 
 /**
  * Represents a flexible structure for translations where all properties are required, based on an original type `T`.
@@ -119,6 +125,14 @@ export function normalizeTranslations<T>(
                 result[key] = (_params?: InterpolationParams) => value;
             } else if (typeof value === 'function') {
                 if (isLangTagSpecial(value)) {
+                    // Pure special (`$`) has no enumerable keys — skip.
+                    // A callable translations tree (asDynamicCaller) is itself
+                    // a special function; walk its own keys.
+                    if (Object.keys(value).length > 0) {
+                        result[key] = normalizeTranslations(
+                            value as RecursiveFlexibleTranslations<any, boolean>
+                        );
+                    }
                     continue;
                 }
                 // Assume functions are already ParameterizedTranslation or compatible

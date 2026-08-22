@@ -197,4 +197,19 @@ describe('normalizeTranslations and FlexibleTranslations', () => {
         expect(normalized.title()).toBe('Hello');
         expect(normalized.$).toBeUndefined();
     });
+
+    it('walks a special that is also a translations tree', () => {
+        const tree = Object.assign(
+            markLangTagSpecial((key: string) => key, 'dynamic-caller'),
+            { label: 'Hi', nested: { title: 'Inside' } }
+        );
+        const input = { user: tree };
+
+        const normalized = normalizeTranslations<{
+            user: { label: string; nested: { title: string } };
+        }>(input);
+
+        expect(normalized.user.label()).toBe('Hi');
+        expect(normalized.user.nested.title()).toBe('Inside');
+    });
 });

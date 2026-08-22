@@ -32,7 +32,7 @@ type InputType = typeof library.InputType;
 
 function SomeComponent(translations: typeof library.InputType) {
     const t = library.initTranslations(translations);
-    return t.enums?.AnnotationSortField?.createdAt?.label();
+    return t.enums.AnnotationSortField.createdAt.label();
 }
 
 const projectT = i18n_project(SCHEMA).useTranslations();
@@ -99,7 +99,7 @@ function readRawInput(translations: InputType) {
 
 function readAfterInit(translations: InputType) {
     const t = library.initTranslations(translations);
-    return t.enums?.AnnotationSortField?.createdAt?.label();
+    return t.enums.AnnotationSortField.createdAt.label();
 }
 
 readRawInput(_accepted);
