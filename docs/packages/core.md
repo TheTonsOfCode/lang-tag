@@ -149,9 +149,21 @@ Strictness is split into:
 - **`required`** — whether the params argument itself is mandatory
 - **`allowExtras`** — whether keys outside the inferred set are allowed
 
-Runtime replacement stays in your tag `transform`. For React nodes
-inside sentences, use
-[`@lang-tag/presets/react/placeholders`](./presets.md).
+Types do not replace the markers. That is the tag `transform`. For
+React nodes (or to reuse the built-in syntaxes), drop in
+[`processPlaceholders`](./presets.md):
+
+```ts
+import { processPlaceholders } from '@lang-tag/presets/react/placeholders';
+
+createCallableTranslations(translations, config, {
+    transform: ({ value, params }) =>
+        processPlaceholders(value, params, { syntax: 'dollarBrace' }),
+});
+```
+
+Default `{{ name }}` needs no `syntax`. A custom extractor uses
+`pattern` (first capture group = name) instead.
 
 ## Lookup
 

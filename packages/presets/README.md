@@ -19,6 +19,7 @@ Each preset is a separate entry:
 
 ```ts
 import { withDynamicCaller } from '@lang-tag/presets/dynamic-caller';
+import { PLACEHOLDER_PATTERNS } from '@lang-tag/presets/placeholder-patterns';
 import { processPlaceholders } from '@lang-tag/presets/react/placeholders';
 ```
 
@@ -75,12 +76,31 @@ createCallableTranslations(translations, config, {
 });
 ```
 
-Custom runtime syntax (first capture group = name). Pair with a custom
-`PlaceholderExtractor` in `lang-tag` if types should match:
+Default `{{ name }}` needs no options. For another built-in, pass
+`syntax` that matches the tag's `extractor`. For a custom extractor,
+pass `pattern` (first capture group = name):
 
 ```ts
-processPlaceholders(value, params, { pattern: /\$\{(.*?)\}/g });
+transform: ({ value, params }) =>
+    processPlaceholders(value, params, { syntax: 'dollarBrace' }),
+// types: DefinePlaceholderParams<{ extractor: DollarBraceExtractor }>
+
+transform: ({ value, params }) =>
+    processPlaceholders(value, params, { pattern: /!(.*?)!/g }),
 ```
+
+| `syntax`         | Core extractor            | Looks like   |
+| ---------------- | ------------------------- | ------------ |
+| `doubleBrace`    | `DoubleBraceExtractor`    | `{{ name }}` |
+| `dollarBrace`    | `DollarBraceExtractor`    | `${ name }`  |
+| `singleBrace`    | `SingleBraceExtractor`    | `{ name }`   |
+| `percentBrace`   | `PercentBraceExtractor`   | `%{ name }`  |
+| `percentPercent` | `PercentPercentExtractor` | `%name%`     |
+| `colon`          | `ColonExtractor`          | `:name`      |
+| `dollarIdent`    | `DollarIdentExtractor`    | `$name`      |
+| `angleBracket`   | `AngleBracketExtractor`   | `<name>`     |
+| `doubleSquare`   | `DoubleSquareExtractor`   | `[[ name ]]` |
+| `singleSquare`   | `SingleSquareExtractor`   | `[ name ]`   |
 
 ## Guidelines
 
