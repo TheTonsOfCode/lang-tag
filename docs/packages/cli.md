@@ -94,8 +94,10 @@ Materialises tags from lang-tag libraries under `node_modules` into
 
 ### `hide-compiled-exports` (`hce`)
 
-For libraries: strip `export` from compiled `.d.ts` tag symbols so
-consumers do not autocomplete internal tags.
+For libraries: strip the value `export` from compiled `.d.ts` tag
+symbols (keep `export type Name = typeof Name`) and rewrite sibling
+declaration files that imported those names as values, so consumers
+do not autocomplete internal tags while `typeof` usages stay valid.
 
 ## Configuration
 

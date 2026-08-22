@@ -3,8 +3,14 @@ import { Project, VariableDeclarationList, VariableStatement } from 'ts-morph';
 
 export interface HideExportsResult {
     hiddenCount: number;
+    hiddenNames: string[];
     modifiedContent: string;
     originalContent: string;
+}
+
+interface HideWorkItem {
+    statement: VariableStatement;
+    names: string[];
 }
 
 export function $LT_HideExportsInDtsFile(
@@ -20,10 +26,8 @@ export function $LT_HideExportsInDtsFile(
     });
 
     const sourceFile = project.addSourceFileAtPath(dtsFilePath);
-    let hasChanges = false;
 
-    const exportsToHide: string[] = [];
-    const processedStatements = new Set();
+    const work: HideWorkItem[] = [];
 
     for (const declaration of sourceFile.getVariableDeclarations()) {
         const name = declaration.getName();
@@ -39,15 +43,18 @@ export function $LT_HideExportsInDtsFile(
                 ) {
                     const varStatement = grandParent as VariableStatement;
 
-                    // Check for export keyword (handles both "export const" and "export declare const")
+                    // Both "export const" and "export declare const"
                     if (varStatement.hasExportKeyword()) {
-                        if (!processedStatements.has(varStatement)) {
-                            processedStatements.add(varStatement);
-                            exportsToHide.push(name);
-
-                            // Remove only the export modifier, keep the declaration
-                            varStatement.toggleModifier('export', false);
-                            hasChanges = true;
+                        const existing = work.find(
+                            (item) => item.statement === varStatement
+                        );
+                        if (existing) {
+                            existing.names.push(name);
+                        } else {
+                            work.push({
+                                statement: varStatement,
+                                names: [name],
+                            });
                         }
                     }
                 }
@@ -55,20 +62,46 @@ export function $LT_HideExportsInDtsFile(
         }
     }
 
-    if (!hasChanges) {
+    if (work.length === 0) {
         return {
             hiddenCount: 0,
+            hiddenNames: [],
             modifiedContent: originalContent,
             originalContent,
         };
     }
 
-    // Get modified content
-    const modifiedContent = sourceFile.getFullText();
+    const hiddenNames: string[] = [];
+
+    for (const { statement } of work) {
+        statement.toggleModifier('export', false);
+    }
+
+    // Insert aliases last-to-first so earlier child indices stay valid.
+    for (let i = work.length - 1; i >= 0; i--) {
+        const { statement, names } = work[i];
+        const aliases = names
+            .filter((name) => !sourceFile.getTypeAlias(name))
+            .map((name) => ({
+                name,
+                type: `typeof ${name}`,
+                isExported: true,
+            }));
+
+        hiddenNames.unshift(...names);
+
+        if (aliases.length > 0) {
+            sourceFile.insertTypeAliases(
+                statement.getChildIndex() + 1,
+                aliases
+            );
+        }
+    }
 
     return {
-        hiddenCount: exportsToHide.length,
-        modifiedContent,
+        hiddenCount: hiddenNames.length,
+        hiddenNames,
+        modifiedContent: sourceFile.getFullText(),
         originalContent,
     };
 }

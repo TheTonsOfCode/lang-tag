@@ -179,8 +179,10 @@ export interface LangTagCLIConfig {
     translationArgPosition: 1 | 2;
 
     /**
-     * Directory containing compiled TypeScript declaration files (.d.ts) to remove export modifier.
-     * Used by the `hide-compiled-exports` command to remove exports of lang-tag variables.
+     * Directory containing compiled TypeScript declaration files (.d.ts).
+     * Used by `hide-compiled-exports` to strip the value `export` from
+     * lang-tag variables (keeping `export type Name = typeof Name`) and
+     * to rewrite sibling files that imported those names as values.
      * @default 'dist'
      */
     hideDistDir?: string;
