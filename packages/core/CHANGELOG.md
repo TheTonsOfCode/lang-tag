@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.1](https://github.com/TheTonsOfCode/lang-tag/compare/Core-v0.16.0...Core-v0.16.1) (2026-08-22)
+
+
+### Bug Fixes
+
+* processPlaceholders syntax option matching core extractors ([7c75b10](https://github.com/TheTonsOfCode/lang-tag/commit/7c75b10be8eccf3b87e862953e5f5a8d578c0e5a))
+
 ## [0.16.0](https://github.com/TheTonsOfCode/lang-tag/compare/Core-v0.15.1...Core-v0.16.0) (2026-08-22)
 
 
