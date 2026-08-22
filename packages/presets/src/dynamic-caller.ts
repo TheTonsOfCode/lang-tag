@@ -234,10 +234,10 @@ export function withDynamicCaller<
  * @template TypedKeys - Whether the caller's key argument is narrowed to the
  * object's translation keys (see {@link DynamicCallerBaseOptions.typedKeys}).
  */
-type AsDynamicCallerProps<
+export type AsDynamicCaller<
     T,
     Recursive extends boolean,
-    TypedKeys extends boolean,
+    TypedKeys extends boolean = true,
 > = {
     [K in keyof T]: Recursive extends true
         ? T[K] extends (...args: any[]) => any
@@ -246,35 +246,7 @@ type AsDynamicCallerProps<
               ? AsDynamicCaller<T[K], Recursive, TypedKeys>
               : T[K]
         : T[K];
-};
-
-/**
- * Function–object intersections are not implicitly assignable to a `Record`
- * index (TS drops the implied index). An explicit string index restores
- * library `InputType` assignability; known keys stay sharp.
- */
-type AsDynamicCallerIndex<
-    T,
-    Recursive extends boolean,
-    TypedKeys extends boolean,
-> = {
-    [k: string]:
-        | AsDynamicCallerProps<
-              T,
-              Recursive,
-              TypedKeys
-          >[keyof AsDynamicCallerProps<T, Recursive, TypedKeys>]
-        | DynamicCaller<TypedKeys extends true ? DynamicCallerKeys<T> : string>
-        | undefined;
-};
-
-export type AsDynamicCaller<
-    T,
-    Recursive extends boolean,
-    TypedKeys extends boolean = true,
-> = AsDynamicCallerProps<T, Recursive, TypedKeys> &
-    DynamicCaller<TypedKeys extends true ? DynamicCallerKeys<T> : string> &
-    AsDynamicCallerIndex<T, Recursive, TypedKeys>;
+} & DynamicCaller<TypedKeys extends true ? DynamicCallerKeys<T> : string>;
 
 /**
  * Makes a callable translations object itself a dynamic caller: `t('greeting')`

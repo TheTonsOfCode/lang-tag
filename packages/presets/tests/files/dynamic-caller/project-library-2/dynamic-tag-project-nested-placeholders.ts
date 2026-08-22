@@ -50,7 +50,7 @@ const mailboxTag = i18n_library<Mailbox>(MAILBOX);
 
 function MailboxView(translations: typeof mailboxTag.InputType) {
     const t = mailboxTag.initTranslations(translations);
-    return t.inbox?.unread?.({ count: 3, sender: 'Ada' });
+    return t.inbox.unread({ count: 3, sender: 'Ada' });
 }
 
 const projectMailbox = i18n_project(MAILBOX);

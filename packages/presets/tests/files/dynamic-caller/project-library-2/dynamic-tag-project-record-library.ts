@@ -34,7 +34,7 @@ function SomeComponent(
     translations: typeof someComponentTranslations.InputType
 ) {
     const t = someComponentTranslations.initTranslations(translations);
-    return t.enums?.AnnotationSortField?.createdAt?.label();
+    return t.enums.AnnotationSortField.createdAt.label();
 }
 
 const importedSomeComponentTranslations = i18n_project(SCHEMA);

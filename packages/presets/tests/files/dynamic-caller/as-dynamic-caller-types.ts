@@ -76,8 +76,11 @@ type _TypedNestedKey = Expect<Equal<Parameters<TypedNested>[0], 'name'>>;
 
 const typed = asDynamicCaller(base);
 typed('greeting');
+typed.greeting({ name: 'Ada' });
 // @ts-expect-error 'nope' is not a translation key
 typed('nope');
+// @ts-expect-error no string index — unknown property
+typed.nope;
 // @ts-expect-error 'user' is a nested object, not a callable translation key
 typed('user');
 

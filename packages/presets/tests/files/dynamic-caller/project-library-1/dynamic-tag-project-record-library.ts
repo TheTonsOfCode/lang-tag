@@ -35,7 +35,7 @@ function SomeComponent(
 ) {
     const t = someComponentTranslations.initTranslations(translations);
 
-    return t.enums?.AnnotationSortField?.createdAt?.label();
+    return t.enums.AnnotationSortField.createdAt.label();
 }
 
 // Project side — `const T` keeps the literal; `withDynamicCaller({ recursive: true })`

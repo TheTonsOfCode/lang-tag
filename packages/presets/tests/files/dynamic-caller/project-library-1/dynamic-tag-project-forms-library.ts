@@ -121,7 +121,7 @@ type TranslationsInput = typeof groupTag.TranslationsInput;
 
 function SpaceCreateForm(translations: TranslationsInput) {
     const t = groupTag.initTranslations(translations.group);
-    return t.submit?.create?.();
+    return t.submit.create?.();
 }
 
 // Project side — both trees come from `useTranslations()` (recursive `$`).
