@@ -1,0 +1,1 @@
+export { formLang } from './tag';

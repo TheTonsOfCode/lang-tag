@@ -79,7 +79,7 @@ export function createCli() {
         .command('hide-compiled-exports')
         .alias('hce')
         .description(
-            'Hide compiled .d.ts exports of lang-tag variables (remove export modifier, keep type)'
+            'Hide compiled .d.ts value exports of lang-tag variables and rewrite consumer typeof imports'
         )
         .option(
             '-d, --dist-dir <dir>',

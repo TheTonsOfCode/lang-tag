@@ -168,6 +168,9 @@ describe('hide-compiled-exports e2e tests', () => {
                     'export declare const testVar'
                 );
                 expect(modifiedContent).toContain('declare const testVar');
+                expect(modifiedContent).toContain(
+                    'export type testVar = typeof testVar'
+                );
 
                 // Check that otherVar export was NOT removed (not a lang-tag)
                 expect(modifiedContent).toContain(
@@ -212,11 +215,17 @@ describe('hide-compiled-exports e2e tests', () => {
                 expect(modifiedContent).toContain(
                     'declare const translations1'
                 );
+                expect(modifiedContent).toContain(
+                    'export type translations1 = typeof translations1'
+                );
                 expect(modifiedContent).not.toContain(
                     'export declare const translations2'
                 );
                 expect(modifiedContent).toContain(
                     'declare const translations2'
+                );
+                expect(modifiedContent).toContain(
+                    'export type translations2 = typeof translations2'
                 );
 
                 // Check that notLangTag export was NOT removed
@@ -259,6 +268,9 @@ describe('hide-compiled-exports e2e tests', () => {
                     'export declare const nestedVar'
                 );
                 expect(modifiedContent).toContain('declare const nestedVar');
+                expect(modifiedContent).toContain(
+                    'export type nestedVar = typeof nestedVar'
+                );
 
                 // Check that regularExport was NOT removed
                 expect(modifiedContent).toContain(
@@ -346,15 +358,111 @@ describe('hide-compiled-exports e2e tests', () => {
                     'export declare const langTagVar'
                 );
                 expect(modifiedContent).toContain('declare const langTagVar');
+                expect(modifiedContent).toContain(
+                    'export type langTagVar = typeof langTagVar'
+                );
                 expect(modifiedContent).not.toContain(
                     'export declare const anotherLangTag'
                 );
                 expect(modifiedContent).toContain(
                     'declare const anotherLangTag'
                 );
+                expect(modifiedContent).toContain(
+                    'export type anotherLangTag = typeof anotherLangTag'
+                );
 
                 // Check that regularExport was NOT removed (different syntax, not lang-tag)
                 expect(modifiedContent).toContain('export const regularExport');
+            } finally {
+                process.chdir(originalCwd);
+            }
+        });
+    });
+
+    describe('dist6 - consumers of a hidden tag', () => {
+        it('should keep a type export and rewrite sibling typeof consumers', async () => {
+            cpSync(join(DISTS_DIR, 'dist6'), TEST_DIST_DIR, {
+                recursive: true,
+            });
+
+            vi.mocked($LT_CollectCandidateFilesWithTags).mockResolvedValue([
+                createFileWithTags('src/tag.ts', [
+                    { variableName: 'formLang' },
+                ]),
+            ]);
+
+            const originalCwd = process.cwd();
+            process.chdir(__dirname);
+
+            try {
+                await $LT_CMD_HideCompiledExports({ distDir: 'test-dist' });
+
+                const tag = readFileSync(
+                    join(TEST_DIST_DIR, 'tag.d.ts'),
+                    'utf-8'
+                );
+                expect(tag).not.toContain('export declare const formLang');
+                expect(tag).toContain('declare const formLang');
+                expect(tag).toContain('export type formLang = typeof formLang');
+                expect(tag).toContain('export declare const helper');
+
+                const inlineProp = readFileSync(
+                    join(TEST_DIST_DIR, 'inline-prop.d.ts'),
+                    'utf-8'
+                );
+                expect(inlineProp).toContain(
+                    'import type { formLang as LANG }'
+                );
+                expect(inlineProp).toContain("LANG['TranslationsInput']");
+                expect(inlineProp).not.toContain('typeof LANG');
+
+                const typeAlias = readFileSync(
+                    join(TEST_DIST_DIR, 'type-alias.d.ts'),
+                    'utf-8'
+                );
+                expect(typeAlias).toContain('import type { formLang as LANG }');
+                expect(typeAlias).toContain(
+                    "type TranslationsInput = LANG['TranslationsInput']"
+                );
+                expect(typeAlias).not.toContain('typeof LANG');
+
+                const rootType = readFileSync(
+                    join(TEST_DIST_DIR, 'root-type.d.ts'),
+                    'utf-8'
+                );
+                expect(rootType).toContain('import type { formLang as LANG }');
+                expect(rootType).toContain('export declare type Input = LANG');
+                expect(rootType).not.toContain('typeof LANG');
+
+                const mixed = readFileSync(
+                    join(TEST_DIST_DIR, 'mixed.d.ts'),
+                    'utf-8'
+                );
+                expect(mixed).toContain('type formLang as LANG');
+                expect(mixed).toContain('helper');
+                expect(mixed).not.toMatch(/import type \{[^}]*helper/);
+                expect(mixed).toContain("LANG['TranslationsInput']");
+                expect(mixed).toContain('typeof helper');
+
+                const already = readFileSync(
+                    join(TEST_DIST_DIR, 'already-type.d.ts'),
+                    'utf-8'
+                );
+                expect(already).toContain('import type { formLang as LANG }');
+                expect(already).toContain("LANG['TranslationsInput']");
+                expect(already).not.toContain('typeof LANG');
+
+                const reexport = readFileSync(
+                    join(TEST_DIST_DIR, 'reexport.d.ts'),
+                    'utf-8'
+                );
+                expect(reexport).toContain('export type { formLang }');
+
+                const untouched = readFileSync(
+                    join(TEST_DIST_DIR, 'untouched.d.ts'),
+                    'utf-8'
+                );
+                expect(untouched).toContain('export declare const leftover');
             } finally {
                 process.chdir(originalCwd);
             }

@@ -49,15 +49,15 @@ Typical CI / pre-translate sequence:
 
 ## Commands
 
-| Command                 | Alias | What it does                                             |
-| ----------------------- | ----- | -------------------------------------------------------- |
-| `init`                  |       | Create `lang-tag.config.js` (`-y` for defaults)          |
-| `init-tag`              |       | Generate a tag function file                             |
-| `collect`               | `c`   | Scan tags → locale files (`--clean` wipes output first)  |
-| `regenerate-tags`       | `rt`  | Apply `onConfigGeneration` and rewrite tag configs       |
-| `watch`                 | `w`   | Watch sources and re-collect                             |
-| `import`                | `i`   | Import tags from lang-tag libraries in `node_modules`    |
-| `hide-compiled-exports` | `hce` | Strip `export` from compiled library tag `.d.ts` symbols |
+| Command                 | Alias | What it does                                                               |
+| ----------------------- | ----- | -------------------------------------------------------------------------- |
+| `init`                  |       | Create `lang-tag.config.js` (`-y` for defaults)                            |
+| `init-tag`              |       | Generate a tag function file                                               |
+| `collect`               | `c`   | Scan tags → locale files (`--clean` wipes output first)                    |
+| `regenerate-tags`       | `rt`  | Apply `onConfigGeneration` and rewrite tag configs                         |
+| `watch`                 | `w`   | Watch sources and re-collect                                               |
+| `import`                | `i`   | Import tags from lang-tag libraries in `node_modules`                      |
+| `hide-compiled-exports` | `hce` | Hide compiled tag value exports; keep a type and rewrite consumer `typeof` |
 
 ## Config (high level)
 
